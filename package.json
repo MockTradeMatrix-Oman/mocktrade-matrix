@@ -1,0 +1,41 @@
+{
+  "name": "mocktrade-matrix",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Guardian-verified, AI-powered financial literacy and algorithmic investment simulation ecosystem.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "scripts": {
+    "dev": "node server.mjs",
+    "build": "next build",
+    "start": "cross-env NODE_ENV=production node server.mjs",
+    "db:reset": "node scripts/reset-db.mjs",
+    "test:backup": "node scripts/backup-selftest.mjs"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "clsx": "^2.1.1",
+    "firebase": "^13.1.0",
+    "jose": "^5.9.6",
+    "lightweight-charts": "4.2.3",
+    "lucide-react": "^0.468.0",
+    "next": "^15.5.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "socket.io": "^4.8.1",
+    "socket.io-client": "^4.8.1",
+    "tailwind-merge": "^3.0.0",
+    "tesseract.js": "^5.1.1",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.0",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "cross-env": "^7.0.3",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.7.0"
+  }
+}

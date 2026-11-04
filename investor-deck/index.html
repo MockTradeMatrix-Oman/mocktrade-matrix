@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MockTrade Matrix — Investor Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Sora:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05070c; --panel:#0a1019; --panel2:#0d1420; --panel3:#111a29;
+  --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.15);
+  --ink:#f3f6fb; --ink2:#c8d1e0; --muted:#8a95a9; --muted2:#667186;
+  --green:#2fe3a0; --green2:#6ff2c3; --violet:#8b7bff; --violet2:#b3a8ff;
+  --cyan:#4cc9f0; --amber:#ffc061; --red:#ff5d7a;
+  --accent:var(--green);
+  --display:"Sora",ui-sans-serif,system-ui,sans-serif;
+  --body:"Inter",ui-sans-serif,system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:#02040a;color:var(--ink);font-family:var(--body);overflow:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+::selection{background:rgba(47,227,160,.28);color:#fff}
+button{font:inherit;color:inherit}
+#viewport{position:fixed;inset:0;display:grid;place-items:center;overflow:hidden;background:radial-gradient(1200px 700px at 50% -10%,#0b1220 0%,#02040a 62%)}
+#stage{position:relative;width:1600px;height:900px;transform-origin:center center;background:var(--bg);overflow:hidden;box-shadow:0 60px 160px rgba(0,0,0,.75)}
+#grain{position:absolute;inset:0;z-index:40;pointer-events:none;opacity:.28;mix-blend-mode:overlay;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E")}
+.slide{position:absolute;inset:0;padding:76px 86px 64px;opacity:0;visibility:hidden;transform:translate3d(54px,0,0) scale(.986);transition:opacity .55s var(--ease),transform .7s var(--ease),visibility .55s;pointer-events:none;overflow:hidden}
+.slide.active{opacity:1;visibility:visible;transform:none;pointer-events:auto;z-index:2}
+.slide.leaving{opacity:0;transform:translate3d(-54px,0,0) scale(.986)}
+.slide::before{content:"";position:absolute;inset:0;z-index:-2;background:
+  radial-gradient(900px 560px at 85% -12%,rgba(47,227,160,.10),transparent 62%),
+  radial-gradient(760px 520px at -8% 108%,rgba(139,123,255,.11),transparent 60%),
+  linear-gradient(180deg,#070b13 0%,#05070c 55%,#04060a 100%)}
+.slide::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;opacity:.5;background-image:linear-gradient(rgba(255,255,255,.024) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.024) 1px,transparent 1px);background-size:80px 80px;mask-image:radial-gradient(90% 80% at 50% 40%,#000 30%,transparent 100%)}
+
+/* reveal */
+.a{opacity:0;transform:translateY(26px);transition:opacity .8s var(--ease),transform .9s var(--ease);transition-delay:calc(var(--i,0)*80ms + 120ms)}
+.slide.active .a{opacity:1;transform:none}
+.a.left{transform:translateX(-34px)}
+.a.right{transform:translateX(34px)}
+.a.scale{transform:scale(.9)}
+.a.fade{transform:none}
+.slide.active .a.left,.slide.active .a.right,.slide.active .a.scale{transform:none}
+.line{transform:scaleX(0);transform-origin:left;transition:transform 1.1s var(--ease);transition-delay:calc(var(--i,0)*80ms + 200ms)}
+.slide.active .line{transform:scaleX(1)}
+
+/* type */
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--green);display:flex;align-items:center;gap:12px;margin:0 0 26px}
+.eyebrow::before{content:"";width:34px;height:1px;background:var(--green);opacity:.7}
+.eyebrow .no{color:var(--muted2)}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.035em;line-height:1.02;font-weight:700}
+h1{font-size:96px}
+h2{font-size:56px;line-height:1.06}
+h3{font-size:24px;letter-spacing:-.02em;line-height:1.2}
+p{margin:0;line-height:1.55;color:var(--ink2)}
+.lead{font-size:23px;line-height:1.5;color:var(--ink2);max-width:760px}
+.small{font-size:14px;color:var(--muted);line-height:1.5}
+.mono{font-family:var(--mono)}
+.grad{background:linear-gradient(100deg,var(--green) 0%,var(--green2) 38%,var(--cyan) 72%,var(--violet2) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.grad-v{background:linear-gradient(100deg,var(--violet2),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.hl{color:var(--green)}
+.hl-v{color:var(--violet2)}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:40px;margin-bottom:34px}
+.top .right{text-align:right;max-width:420px}
+
+/* chrome */
+.hud{position:absolute;top:0;left:0;right:0;height:56px;padding:0 86px;display:flex;align-items:center;justify-content:space-between;z-index:30;pointer-events:none;opacity:0;transition:opacity .4s}
+body.ready .hud{opacity:1}
+.brand{display:flex;align-items:center;gap:11px;font-family:var(--display);font-weight:600;font-size:14px;letter-spacing:-.01em}
+.brand .mark{width:22px;height:22px;border-radius:6px;background:linear-gradient(140deg,var(--green),#0d8f66);position:relative;box-shadow:0 0 24px rgba(47,227,160,.35)}
+.brand .mark::after{content:"";position:absolute;inset:6px;border:1.5px solid #04110c;border-radius:2px;border-right-color:transparent;border-bottom-color:transparent;transform:rotate(45deg)}
+.brand span{color:var(--muted);font-weight:400;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;margin-left:2px}
+.hud .mid{font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted2)}
+.hud .count{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.1em}
+.hud .count b{color:var(--ink);font-weight:500}
+#bar{position:absolute;left:0;bottom:0;height:2px;width:100%;background:rgba(255,255,255,.06);z-index:35}
+#bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--green),var(--cyan),var(--violet));box-shadow:0 0 18px rgba(47,227,160,.7);transition:width .6s var(--ease)}
+#hint{position:absolute;right:26px;bottom:22px;z-index:36;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--muted2);opacity:.7;display:flex;gap:14px;pointer-events:none}
+#hint kbd{border:1px solid var(--line2);border-bottom-width:2px;border-radius:4px;padding:1px 5px;color:var(--muted);font-family:var(--mono);font-size:9px}
+
+/* cover */
+.cover{padding:0}
+.cover::before{background:radial-gradient(1100px 700px at 70% 30%,rgba(47,227,160,.14),transparent 60%),radial-gradient(800px 600px at 15% 80%,rgba(139,123,255,.14),transparent 60%),linear-gradient(160deg,#070b13,#04060a 70%)}
+.cover-grid{position:absolute;inset:0;display:grid;grid-template-columns:1.08fr .92fr;align-items:center;padding:0 86px}
+.cover-copy{position:relative;z-index:3;padding-bottom:24px}
+.cover h1{font-size:104px;margin:16px 0 26px;letter-spacing:-.045em}
+.cover .lead{font-size:22px;max-width:640px}
+.cover .meta{display:flex;gap:26px;margin-top:42px;flex-wrap:wrap}
+.cover .meta div{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:9px}
+.cover .meta b{color:var(--ink);font-weight:500}
+.cover .meta i{width:4px;height:4px;border-radius:50%;background:var(--green);display:block;box-shadow:0 0 10px var(--green)}
+.badge-live{display:inline-flex;align-items:center;gap:9px;padding:7px 13px;border:1px solid rgba(47,227,160,.3);border-radius:999px;background:rgba(47,227,160,.07);font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--green2)}
+.badge-live .dot{width:6px;height:6px;border-radius:50%;background:var(--green);box-shadow:0 0 0 0 rgba(47,227,160,.7);animation:pulse 2.2s infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(47,227,160,.55)}70%{box-shadow:0 0 0 9px rgba(47,227,160,0)}100%{box-shadow:0 0 0 0 rgba(47,227,160,0)}}
+
+.cover-visual{position:relative;height:640px;display:grid;place-items:center}
+.orb{position:absolute;width:520px;height:520px;border-radius:50%;background:radial-gradient(circle at 38% 30%,rgba(47,227,160,.22),rgba(47,227,160,.04) 42%,transparent 64%);filter:blur(2px);animation:float 9s ease-in-out infinite}
+.rings{position:absolute;width:560px;height:560px;border-radius:50%;border:1px solid rgba(255,255,255,.055);animation:spin 60s linear infinite}
+.rings::before,.rings::after{content:"";position:absolute;border-radius:50%;border:1px dashed rgba(255,255,255,.06)}
+.rings::before{inset:64px}.rings::after{inset:140px}
+.rings i{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 16px var(--green);top:-3px;left:calc(50% - 3px)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(-10px)}50%{transform:translateY(12px)}}
+.hero-card{position:relative;z-index:3;width:440px;border:1px solid var(--line2);border-radius:24px;background:linear-gradient(160deg,rgba(17,26,41,.94),rgba(8,12,20,.96));box-shadow:0 40px 90px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.07);padding:26px 26px 22px;animation:cardin 1.4s var(--ease) both .3s}
+@keyframes cardin{from{opacity:0;transform:translateY(40px) rotateX(8deg)}to{opacity:1;transform:none}}
+.hero-card .row{display:flex;justify-content:space-between;align-items:center}
+.hero-card .label{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.hero-card .val{font-family:var(--display);font-size:38px;font-weight:600;letter-spacing:-.04em;margin-top:8px}
+.hero-card .chg{font-family:var(--mono);font-size:12px;color:var(--green);background:rgba(47,227,160,.1);border:1px solid rgba(47,227,160,.22);padding:5px 10px;border-radius:999px}
+.spark{margin:16px 0 6px;height:104px;width:100%}
+.spark path{fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.spark .glow{stroke:url(#sg);filter:drop-shadow(0 0 8px rgba(47,227,160,.55))}
+.spark .base{stroke:rgba(47,227,160,.12);stroke-width:14;filter:blur(7px)}
+.spark path.draw{stroke-dasharray:900;stroke-dashoffset:900;animation:draw 2.4s var(--ease) forwards 1s}
+@keyframes draw{to{stroke-dashoffset:0}}
+.hero-card .stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.hero-card .stats div{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)}
+.hero-card .stats b{display:block;font-family:var(--display);font-size:17px;letter-spacing:-.02em;color:var(--ink);margin-top:5px;font-weight:600}
+.score-ring{position:absolute;right:-34px;bottom:-30px;width:132px;height:132px;border-radius:50%;background:conic-gradient(var(--green) 0 296deg,rgba(255,255,255,.07) 296deg);display:grid;place-items:center;box-shadow:0 24px 50px rgba(0,0,0,.5);animation:cardin 1.2s var(--ease) both .9s}
+.score-ring::before{content:"";position:absolute;inset:9px;border-radius:50%;background:#0a1019;border:1px solid var(--line)}
+.score-ring .in{position:relative;text-align:center}
+.score-ring b{font-family:var(--display);font-size:33px;letter-spacing:-.05em;display:block;line-height:1}
+.score-ring span{font-family:var(--mono);font-size:8px;letter-spacing:.18em;color:var(--muted);text-transform:uppercase}
+.ticker{position:absolute;left:0;right:0;bottom:0;height:44px;border-top:1px solid var(--line);background:rgba(5,7,12,.7);display:flex;align-items:center;overflow:hidden;z-index:4}
+.ticker .track{display:flex;gap:42px;white-space:nowrap;animation:marquee 44s linear infinite;padding-left:20px}
+.ticker span{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:.05em;display:inline-flex;gap:9px;align-items:center}
+.ticker b{color:var(--ink2);font-weight:500}
+.ticker em{font-style:normal;color:var(--green)}
+.ticker em.dn{color:var(--red)}
+@keyframes marquee{to{transform:translateX(-50%)}}
+
+/* generic slide furniture */
+.foot{position:absolute;left:86px;right:86px;bottom:34px;display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);z-index:3}
+.foot .dotline{display:flex;gap:6px;align-items:center}
+.foot .dotline i{width:5px;height:5px;border-radius:50%;background:rgba(255,255,255,.18)}
+.foot .dotline i.on{background:var(--green);box-shadow:0 0 8px rgba(47,227,160,.6)}
+.card{border:1px solid var(--line);border-radius:18px;background:linear-gradient(155deg,rgba(17,26,41,.72),rgba(9,13,21,.78));box-shadow:inset 0 1px 0 rgba(255,255,255,.045);position:relative;overflow:hidden}
+.card::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(300px 160px at 20% 0%,rgba(255,255,255,.04),transparent 70%)}
+.pad{padding:28px}
+.kicker{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+.big{font-family:var(--display);letter-spacing:-.05em;line-height:.95;font-weight:600}
+.pill{display:inline-flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:6px 11px;background:rgba(255,255,255,.02)}
+.pill.g{color:var(--green2);border-color:rgba(47,227,160,.25);background:rgba(47,227,160,.06)}
+.pill.v{color:var(--violet2);border-color:rgba(139,123,255,.28);background:rgba(139,123,255,.07)}
+.pill.a{color:var(--amber);border-color:rgba(255,192,97,.25);background:rgba(255,192,97,.06)}
+
+/* problem */
+.prob-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:72px;align-items:center;height:100%;padding-bottom:40px}
+.prob-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:36px}
+.prob-stats .card{padding:22px 24px}
+.prob-stats .big{font-size:52px;color:var(--ink)}
+.prob-stats .big span{font-size:24px;color:var(--muted)}
+.prob-stats p{font-size:12.5px;color:var(--muted);line-height:1.45;margin-top:10px}
+.bridge{position:relative;height:300px;display:grid;place-items:center}
+.bridge svg{width:100%;height:auto;overflow:visible}
+.bridge .cap{position:absolute;bottom:6px;left:0;right:0;text-align:center;font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted2)}
+.ghost{position:absolute;font-family:var(--display);font-weight:800;font-size:420px;color:rgba(255,255,255,.022);right:-40px;top:-80px;letter-spacing:-.07em;pointer-events:none}
+
+/* insight */
+.insight{display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center;height:100%;padding-bottom:36px}
+.quote{font-family:var(--display);font-size:42px;line-height:1.16;letter-spacing:-.035em;font-weight:600}
+.quote .q{color:var(--green)}
+.cycle{position:relative;width:470px;height:470px;margin:0 auto;display:grid;place-items:center}
+.cycle .ring{position:absolute;inset:0;border-radius:50%;border:1px solid var(--line);animation:spin 40s linear infinite}
+.cycle .ring::after{content:"";position:absolute;width:6px;height:6px;border-radius:50%;background:var(--green);top:-3px;left:50%;box-shadow:0 0 14px var(--green)}
+.cycle .ring2{inset:52px;border-style:dashed;opacity:.6;animation-direction:reverse;animation-duration:52s}
+.cycle .core{width:190px;height:190px;border-radius:50%;border:1px solid rgba(47,227,160,.25);background:radial-gradient(circle at 40% 30%,rgba(47,227,160,.18),rgba(10,16,25,.9) 70%);display:grid;place-items:center;text-align:center;box-shadow:0 0 80px rgba(47,227,160,.12)}
+.cycle .core b{font-family:var(--display);font-size:22px;letter-spacing:-.02em;display:block}
+.cycle .core span{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.orb-item{position:absolute;display:flex;flex-direction:column;gap:4px;padding:12px 16px;border:1px solid var(--line);border-radius:12px;background:rgba(10,16,25,.9);backdrop-filter:blur(8px);min-width:120px}
+.orb-item b{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--green2)}
+.orb-item span{font-size:11px;color:var(--muted)}
+.orb-item.t{top:12px;left:50%;transform:translateX(-50%)}
+.orb-item.r{right:-14px;top:50%;transform:translateY(-50%)}
+.orb-item.b{bottom:10px;left:50%;transform:translateX(-50%)}
+.orb-item.l{left:-14px;top:50%;transform:translateY(-50%)}
+
+/* product */
+.feat{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:34px}
+.feat .card{padding:20px 20px 18px;min-height:150px}
+.feat .ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;margin-bottom:14px;border:1px solid var(--line2);background:rgba(255,255,255,.035);font-family:var(--mono);font-size:14px;color:var(--green2)}
+.feat h4{font-family:var(--display);font-size:15.5px;margin:0 0 6px;letter-spacing:-.01em;font-weight:600}
+.feat p{font-size:11.5px;color:var(--muted);line-height:1.45}
+.prod-split{display:grid;grid-template-columns:1fr .92fr;gap:56px;align-items:center}
+.mini-tape{border:1px solid var(--line);border-radius:20px;background:linear-gradient(160deg,rgba(17,26,41,.8),rgba(8,12,20,.9));padding:22px;box-shadow:0 30px 70px rgba(0,0,0,.4)}
+.mini-tape .hrow{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mini-tape .hrow span{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted)}
+.tape-row{display:grid;grid-template-columns:1.4fr .8fr .7fr;gap:10px;align-items:center;padding:9px 0;border-top:1px solid rgba(255,255,255,.05);font-family:var(--mono);font-size:11px}
+.tape-row b{color:var(--ink2);font-weight:500}
+.tape-row .px{color:var(--ink);text-align:right}
+.tape-row .up{color:var(--green);text-align:right}
+.tape-row .dn{color:var(--red);text-align:right}
+.tape-row .nm{color:var(--muted);font-size:10px}
+
+/* steps */
+.steps{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-top:36px;position:relative}
+.steps::before{content:"";position:absolute;top:37px;left:5%;right:5%;height:1px;background:linear-gradient(90deg,transparent,rgba(47,227,160,.4),rgba(139,123,255,.4),transparent)}
+.step{position:relative;padding-top:0}
+.step .n{width:44px;height:44px;border-radius:50%;border:1px solid rgba(47,227,160,.35);background:#08120f;display:grid;place-items:center;font-family:var(--mono);font-size:12px;color:var(--green2);margin-bottom:20px;position:relative;z-index:2;box-shadow:0 0 0 6px #05070c,0 0 26px rgba(47,227,160,.16)}
+.step h4{font-family:var(--display);font-size:16px;margin:0 0 8px;letter-spacing:-.01em}
+.step p{font-size:12px;color:var(--muted);line-height:1.5}
+.step .tag{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);margin-top:12px;display:block}
+.callout{display:flex;align-items:center;gap:14px;border:1px solid rgba(255,192,97,.2);background:rgba(255,192,97,.05);border-radius:14px;padding:14px 20px;margin-top:30px;font-size:12.5px;color:var(--ink2)}
+.callout b{color:var(--amber);font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}
+
+/* trust */
+.trust-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}
+.trust .card{min-height:350px;display:flex;flex-direction:column}
+.trust .card .icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;font-size:19px;margin-bottom:22px;border:1px solid rgba(47,227,160,.22);background:rgba(47,227,160,.07);color:var(--green2)}
+.trust h3{font-size:21px;margin-bottom:10px}
+.trust p{font-size:13px;color:var(--muted);line-height:1.55}
+.trust ul{list-style:none;padding:0;margin:20px 0 0;display:flex;flex-direction:column;gap:9px}
+.trust li{font-size:11.5px;color:var(--ink2);display:flex;gap:9px;align-items:flex-start;font-family:var(--mono)}
+.trust li::before{content:"✓";color:var(--green);flex:none}
+.trust .cardfoot{margin-top:auto;padding-top:18px;border-top:1px solid var(--line);font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2)}
+
+/* behavioral */
+.behav{display:grid;grid-template-columns:.9fr 1.1fr;gap:70px;align-items:center;height:100%;padding-bottom:30px}
+.gauge{position:relative;width:340px;height:340px;margin:0 auto}
+.gauge svg{transform:rotate(-90deg);overflow:visible}
+.gauge .track{fill:none;stroke:rgba(255,255,255,.07);stroke-width:14}
+.gauge .val{fill:none;stroke:url(#gg);stroke-width:14;stroke-linecap:round;stroke-dasharray:900;stroke-dashoffset:900;transition:stroke-dashoffset 2s var(--ease) .5s}
+.slide.active .gauge .val{stroke-dashoffset:248}
+.gauge .center{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.gauge .center b{font-family:var(--display);font-size:72px;letter-spacing:-.06em;line-height:1;display:block}
+.gauge .center span{font-family:var(--mono);font-size:9px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase;display:block;margin-top:8px}
+.bars{display:flex;flex-direction:column;gap:18px;margin-top:8px}
+.bar-row{display:grid;grid-template-columns:130px 1fr 46px;gap:16px;align-items:center}
+.bar-row span{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.bar-row .tr{height:6px;border-radius:99px;background:rgba(255,255,255,.06);overflow:hidden}
+.bar-row .tr i{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--green),var(--cyan));transition:width 1.4s var(--ease);transition-delay:calc(var(--i,0)*120ms + 400ms)}
+.slide.active .bar-row .tr i{width:var(--w)}
+.bar-row b{font-family:var(--mono);font-size:12px;color:var(--ink2);text-align:right;font-weight:500}
+.report-tags{display:flex;gap:8px;margin-top:26px}
+
+/* market */
+.market-grid{display:grid;grid-template-columns:1.02fr .98fr;gap:60px;align-items:center;height:100%;padding-bottom:30px}
+.stat3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:32px}
+.stat3 .card{padding:22px}
+.stat3 .big{font-size:42px}
+.stat3 .big small{font-size:18px;color:var(--muted)}
+.stat3 p{font-size:11px;color:var(--muted);line-height:1.45;margin-top:8px;font-family:var(--mono)}
+.hbar{display:flex;flex-direction:column;gap:20px;margin-top:10px}
+.hbar .lbl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.hbar .lbl b{color:var(--ink2);font-weight:500}
+.hbar .tr{height:34px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);overflow:hidden;position:relative}
+.hbar .tr i{display:block;height:100%;width:var(--w);background:linear-gradient(90deg,rgba(47,227,160,.5),rgba(47,227,160,.14));border-right:1px solid var(--green);transition:width 1.3s var(--ease) .4s}
+.hbar .tr i.v{background:linear-gradient(90deg,rgba(139,123,255,.5),rgba(139,123,255,.12));border-right-color:var(--violet)}
+.hbar .tr i.c{background:linear-gradient(90deg,rgba(76,201,240,.45),rgba(76,201,240,.1));border-right-color:var(--cyan)}
+.assume{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--muted2);margin-top:18px;line-height:1.6}
+
+/* pricing */
+.price-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:34px}
+.price .card{padding:32px;min-height:300px;display:flex;flex-direction:column}
+.price .amt{font-family:var(--display);font-size:58px;letter-spacing:-.05em;margin:16px 0 4px;font-weight:600}
+.price .amt span{font-size:15px;color:var(--muted);letter-spacing:0;font-family:var(--body);font-weight:400}
+.price ul{list-style:none;padding:0;margin:22px 0 0;display:flex;flex-direction:column;gap:10px}
+.price li{font-size:12.5px;color:var(--ink2);display:flex;gap:9px;align-items:flex-start}
+.price li::before{content:"→";color:var(--green);font-family:var(--mono);flex:none}
+.price .card.hot{border-color:rgba(47,227,160,.28);background:linear-gradient(155deg,rgba(47,227,160,.08),rgba(9,13,21,.85) 55%)}
+.econ{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:22px}
+.econ div{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:rgba(255,255,255,.018)}
+.econ b{display:block;font-family:var(--display);font-size:22px;letter-spacing:-.03em;font-weight:600;color:var(--green2)}
+.econ span{font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2)}
+
+/* competition */
+.tbl{margin-top:30px;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:rgba(9,13,21,.55)}
+.tbl table{width:100%;border-collapse:collapse}
+.tbl th,.tbl td{padding:13px 18px;text-align:left;font-size:12px;border-bottom:1px solid rgba(255,255,255,.05)}
+.tbl th{font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);background:rgba(255,255,255,.02);font-weight:500}
+.tbl td:first-child{color:var(--ink2);font-weight:500}
+.tbl td{color:var(--muted);font-family:var(--mono);font-size:10.5px}
+.tbl tr:last-child td{border-bottom:0}
+.tbl td.us{color:var(--green2);background:rgba(47,227,160,.055)}
+.tbl th.us{color:var(--green);background:rgba(47,227,160,.08)}
+.tbl .yes{color:var(--green)}
+.tbl .no{color:rgba(255,255,255,.2)}
+
+/* traction */
+.traction{display:grid;grid-template-columns:.88fr 1.12fr;gap:54px;align-items:center;height:100%;padding-bottom:24px}
+.checklist{display:grid;grid-template-columns:1fr 1fr;gap:10px 18px;margin-top:26px}
+.checklist div{display:flex;gap:9px;align-items:flex-start;font-size:11.5px;color:var(--ink2);line-height:1.4;font-family:var(--mono)}
+.checklist div::before{content:"✓";color:var(--green);flex:none;font-size:11px}
+.qa{margin-top:26px;border:1px solid rgba(47,227,160,.22);background:rgba(47,227,160,.05);border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;font-size:12px;color:var(--ink2)}
+.qa b{font-family:var(--display);font-size:24px;color:var(--green2);letter-spacing:-.03em}
+
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:44px;position:relative}
+.road::before{content:"";position:absolute;left:0;right:0;top:23px;height:1px;background:linear-gradient(90deg,rgba(47,227,160,.5),rgba(76,201,240,.35),rgba(139,123,255,.35),rgba(255,255,255,.06))}
+.phase{position:relative;padding-top:60px}
+.phase .dot{position:absolute;top:16px;left:0;width:15px;height:15px;border-radius:50%;background:#05070c;border:1px solid var(--green);box-shadow:0 0 0 5px #05070c,0 0 18px rgba(47,227,160,.4)}
+.phase .when{font-family:var(--mono);font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:var(--green);margin-bottom:10px;display:block}
+.phase h4{font-family:var(--display);font-size:17px;margin:0 0 10px}
+.phase p{font-size:11.5px;color:var(--muted);line-height:1.5}
+.phase ul{list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:6px}
+.phase li{font-size:10.5px;color:var(--ink2);font-family:var(--mono)}
+.phase li::before{content:"›";color:var(--green);margin-right:7px}
+
+/* team + ask */
+.team{display:grid;grid-template-columns:.92fr 1.08fr;gap:60px;align-items:center;height:100%;padding-bottom:26px}
+.founder{display:flex;gap:20px;align-items:center;margin-top:28px}
+.avatar{width:78px;height:78px;border-radius:20px;background:linear-gradient(140deg,#173127,#0d1a2a);border:1px solid var(--line2);display:grid;place-items:center;font-family:var(--display);font-size:25px;color:var(--green2);box-shadow:0 18px 40px rgba(0,0,0,.4)}
+.founder b{font-family:var(--display);font-size:21px;display:block;letter-spacing:-.02em}
+.founder span{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.askbox{border:1px solid rgba(47,227,160,.28);border-radius:22px;background:linear-gradient(150deg,rgba(47,227,160,.09),rgba(9,13,21,.9) 60%);padding:32px;box-shadow:0 30px 80px rgba(0,0,0,.4)}
+.askbox .amt{font-family:var(--display);font-size:56px;letter-spacing:-.05em;font-weight:600;margin:8px 0 2px}
+.askbox .amt span{font-size:15px;font-family:var(--body);color:var(--muted);letter-spacing:0}
+.alloc{display:flex;height:12px;border-radius:99px;overflow:hidden;margin:24px 0 14px;background:rgba(255,255,255,.06)}
+.alloc i{height:100%}
+.alloc .a1{width:40%;background:var(--green)}.alloc .a2{width:35%;background:var(--violet)}.alloc .a3{width:15%;background:var(--cyan)}.alloc .a4{width:10%;background:var(--amber)}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:9px 18px}
+.legend div{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;color:var(--muted);display:flex;align-items:center;gap:7px}
+.legend i{width:7px;height:7px;border-radius:2px;display:inline-block}
+
+/* close */
+.close{display:grid;place-items:center;text-align:center}
+.close::before{background:radial-gradient(900px 600px at 50% 40%,rgba(47,227,160,.14),transparent 62%),radial-gradient(700px 500px at 80% 100%,rgba(139,123,255,.12),transparent 60%),linear-gradient(180deg,#070b13,#04060a)}
+.close-in{position:relative;z-index:2;max-width:1050px}
+.close h1{font-size:82px;margin:24px 0}
+.close .lead{margin:0 auto;max-width:760px}
+.close .contact{display:flex;gap:14px;justify-content:center;margin-top:44px}
+.contact .pill{font-size:11px;padding:9px 16px}
+.close .ringbg{position:absolute;width:760px;height:760px;border-radius:50%;border:1px solid rgba(255,255,255,.05);left:50%;top:50%;transform:translate(-50%,-50%);animation:spin 80s linear infinite}
+.close .ringbg::after{content:"";position:absolute;inset:80px;border-radius:50%;border:1px dashed rgba(255,255,255,.05)}
+.close .ringbg i{position:absolute;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 20px var(--green);top:-4px;left:50%}
+
+/* misc layouts */
+.two{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;height:100%;padding-bottom:34px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:34px}
+.kpis{display:flex;gap:38px;margin-top:34px;flex-wrap:wrap}
+.kpi b{font-family:var(--display);font-size:40px;letter-spacing:-.05em;display:block;line-height:1}
+.kpi span{font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);display:block;margin-top:8px}
+.prob-grid,.insight,.behav,.market-grid,.traction,.team,.two{height:auto;min-height:0}
+.section-tag{position:absolute;right:86px;top:84px;font-family:var(--mono);font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted2);writing-mode:vertical-rl;transform:rotate(180deg)}
+.notesbox{border-left:2px solid rgba(47,227,160,.4);padding-left:18px;margin-top:30px;font-size:13px;color:var(--muted);line-height:1.6;max-width:620px}
+.inline-ico{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:5px;border:1px solid var(--line2);font-family:var(--mono);font-size:10px;color:var(--green2);margin-right:8px;vertical-align:-3px}
+
+/* help overlay */
+#help{position:absolute;inset:0;z-index:60;display:none;place-items:center;background:rgba(2,4,10,.82);backdrop-filter:blur(10px)}
+#help.on{display:grid}
+#help .box{width:520px;border:1px solid var(--line2);border-radius:20px;background:#0a1019;padding:34px 38px;box-shadow:0 40px 100px rgba(0,0,0,.6)}
+#help h3{font-size:22px;margin-bottom:6px}
+#help p{font-size:12px;color:var(--muted);margin-bottom:22px}
+#help .k{display:flex;justify-content:space-between;padding:9px 0;border-top:1px solid var(--line);font-size:12px;color:var(--ink2)}
+#help .k b{font-family:var(--mono);font-size:10px;color:var(--muted);border:1px solid var(--line2);border-radius:5px;padding:3px 8px;font-weight:400}
+
+@media print{
+  @page{size:1600px 900px;margin:0}
+  html,body{overflow:visible;background:#fff}
+  #viewport{position:static;display:block;background:none}
+  #stage{width:1600px;height:auto;transform:none!important;box-shadow:none}
+  #grain,.hud,#bar,#hint,#help{display:none!important}
+  .slide{position:relative;inset:auto;width:1600px;height:900px;opacity:1!important;visibility:visible!important;transform:none!important;page-break-after:always;break-after:page}
+  .slide .a{opacity:1!important;transform:none!important}
+  .slide .line{transform:none!important}
+  .gauge .val{stroke-dashoffset:248!important}
+  .bar-row .tr i{width:var(--w)!important}
+  .hbar .tr i{width:var(--w)!important}
+}
+</style>
+</head>
+<body>
+<div id="viewport"><div id="stage">
+
+<div class="hud">
+  <div class="brand"><span class="mark"></span>MockTrade Matrix <span>Investor deck · 2026</span></div>
+  <div class="mid" id="hudSection">Cover</div>
+  <div class="count"><b id="hudNow">01</b> / <span id="hudTotal">16</span></div>
+</div>
+
+<!-- 01 COVER -->
+<section class="slide cover active" data-section="Cover">
+  <div class="cover-grid">
+    <div class="cover-copy">
+      <div class="a fade" style="--i:0"><span class="badge-live"><span class="dot"></span>Live product · Private beta</span></div>
+      <h1 class="a" style="--i:1">Learn to lose.<br><span class="grad">Before it costs anything.</span></h1>
+      <p class="lead a" style="--i:2">The guardian-verified markets lab where students trade India and the US with real market friction — and zero real money.</p>
+      <div class="meta a" style="--i:3">
+        <div><i></i><b>5</b> asset classes</div>
+        <div><i></i><b>31</b> live instruments</div>
+        <div><i></i><b>2</b> markets</div>
+        <div><i></i><b>8</b> modules</div>
+      </div>
+      <div class="meta a" style="--i:4;margin-top:34px">
+        <div style="color:var(--muted2)">Not a mockup. A running system.</div>
+      </div>
+    </div>
+    <div class="cover-visual">
+      <div class="orb"></div>
+      <div class="rings"><i></i></div>
+      <div class="hero-card">
+        <div class="row">
+          <span class="label">Simulated portfolio</span>
+          <span class="chg">+12.4%</span>
+        </div>
+        <div class="val">₹1,12,400</div>
+        <svg class="spark" viewBox="0 0 380 104" preserveAspectRatio="none">
+          <defs><linearGradient id="sg" x1="0" x2="1"><stop offset="0" stop-color="#2fe3a0"/><stop offset="1" stop-color="#4cc9f0"/></linearGradient></defs>
+          <path class="base" d="M0,84 C28,80 42,70 66,72 C92,74 104,58 128,60 C154,62 166,44 190,48 C214,52 226,34 250,38 C274,42 288,24 312,28 C336,32 356,16 380,12"/>
+          <path class="glow draw" d="M0,84 C28,80 42,70 66,72 C92,74 104,58 128,60 C154,62 166,44 190,48 C214,52 226,34 250,38 C274,42 288,24 312,28 C336,32 356,16 380,12"/>
+        </svg>
+        <div class="stats">
+          <div>Cash<b>₹42,150</b></div>
+          <div>Invested<b>₹70,250</b></div>
+          <div>Positions<b>7</b></div>
+        </div>
+        <div class="score-ring"><div class="in"><b>82</b><span>Behavior</span></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="ticker"><div class="track">
+    <span><b>RELIANCE</b> ₹2,941 <em>+1.24%</em></span><span><b>TCS</b> ₹4,112 <em>+0.62%</em></span><span><b>HDFCBANK</b> ₹1,684 <em class="dn">−0.41%</em></span><span><b>INFY</b> ₹1,892 <em>+0.88%</em></span><span><b>AAPL</b> $232.4 <em>+1.02%</em></span><span><b>NVDA</b> $138.9 <em>+2.31%</em></span><span><b>BTC</b> $67,240 <em class="dn">−1.84%</em></span><span><b>GOLD</b> ₹71,500 <em>+0.34%</em></span>
+    <span><b>RELIANCE</b> ₹2,941 <em>+1.24%</em></span><span><b>TCS</b> ₹4,112 <em>+0.62%</em></span><span><b>HDFCBANK</b> ₹1,684 <em class="dn">−0.41%</em></span><span><b>INFY</b> ₹1,892 <em>+0.88%</em></span><span><b>AAPL</b> $232.4 <em>+1.02%</em></span><span><b>NVDA</b> $138.9 <em>+2.31%</em></span><span><b>BTC</b> $67,240 <em class="dn">−1.84%</em></span><span><b>GOLD</b> ₹71,500 <em>+0.34%</em></span>
+  </div></div>
+</section>
+
+<!-- 02 PROBLEM -->
+<section class="slide" data-section="The problem">
+  <div class="ghost">33%</div>
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">01</span> The problem</p>
+      <h2>We teach risk with slides.<br>Then hand them a <span class="grad">brokerage app.</span></h2>
+    </div>
+    <div class="right"><p class="small">Financial education is theoretical at exactly the moment it becomes real.</p></div>
+  </div>
+  <div class="prob-grid">
+    <div>
+      <p class="lead">A teenager can pass a quiz on diversification and still panic-sell their first drawdown. The first real loss is the lesson — and it is expensive.</p>
+      <div class="prob-stats">
+        <div class="card a" style="--i:0"><div class="big" data-count="33">0<span>%</span></div><p>of adults worldwide are financially literate. <span class="mono" style="color:var(--muted2)">S&amp;P Global FinLit</span></p></div>
+        <div class="card a" style="--i:1"><div class="big" data-count="27">0<span>%</span></div><p>in India — despite being one of the world's fastest-growing retail investor bases.</p></div>
+        <div class="card a" style="--i:2;grid-column:1/-1;display:flex;gap:22px;align-items:center;padding:20px 24px">
+          <div class="big" style="font-size:34px;color:var(--red)">₹0 → ₹1L</div>
+          <p style="font-size:12.5px;color:var(--muted);margin:0">The gap between a classroom and a funded account is where confidence, discipline and money are lost. Nobody practises the gap.</p>
+        </div>
+      </div>
+    </div>
+    <div class="bridge a right" style="--i:1">
+      <svg viewBox="0 0 520 280">
+        <defs>
+          <linearGradient id="bg1" x1="0" x2="1"><stop offset="0" stop-color="#2fe3a0"/><stop offset="1" stop-color="#4cc9f0"/></linearGradient>
+          <linearGradient id="bg2" x1="0" x2="1"><stop offset="0" stop-color="#8b7bff"/><stop offset="1" stop-color="#ff5d7a"/></linearGradient>
+        </defs>
+        <g opacity=".9">
+          <rect x="18" y="92" width="140" height="150" rx="12" fill="rgba(255,255,255,.03)" stroke="rgba(255,255,255,.12)"/>
+          <text x="88" y="130" text-anchor="middle" fill="#8a95a9" font-family="JetBrains Mono" font-size="9" letter-spacing="2">CLASSROOM</text>
+          <text x="88" y="166" text-anchor="middle" fill="#f3f6fb" font-family="Sora" font-size="26" font-weight="600">Theory</text>
+          <path d="M154 168 L210 168" stroke="rgba(255,255,255,.16)" stroke-dasharray="4 5"/>
+          <path d="M196 162 L206 168 L196 174" fill="none" stroke="rgba(255,255,255,.35)" stroke-width="1.5"/>
+        </g>
+        <g>
+          <rect x="214" y="40" width="140" height="202" rx="12" fill="rgba(255,93,122,.05)" stroke="rgba(255,93,122,.35)"/>
+          <text x="284" y="74" text-anchor="middle" fill="#ff92a6" font-family="JetBrains Mono" font-size="9" letter-spacing="2">THE GAP</text>
+          <text x="284" y="130" text-anchor="middle" fill="#f3f6fb" font-family="Sora" font-size="30" font-weight="600">First</text>
+          <text x="284" y="162" text-anchor="middle" fill="#f3f6fb" font-family="Sora" font-size="30" font-weight="600">loss</text>
+          <text x="284" y="198" text-anchor="middle" fill="#8a95a9" font-family="JetBrains Mono" font-size="9">no rehearsal</text>
+          <path d="M320 84 L332 84" stroke="#ff5d7a" stroke-width="1.5"/><path d="M326 78 L332 84 L326 90" fill="none" stroke="#ff5d7a" stroke-width="1.5"/>
+        </g>
+        <g>
+          <rect x="374" y="92" width="128" height="150" rx="12" fill="rgba(47,227,160,.05)" stroke="rgba(47,227,160,.35)"/>
+          <text x="438" y="130" text-anchor="middle" fill="#6ff2c3" font-family="JetBrains Mono" font-size="9" letter-spacing="2">BROKERAGE</text>
+          <text x="438" y="166" text-anchor="middle" fill="#f3f6fb" font-family="Sora" font-size="26" font-weight="600">Real money</text>
+          <text x="438" y="198" text-anchor="middle" fill="#8a95a9" font-family="JetBrains Mono" font-size="9">real consequences</text>
+        </g>
+        <path d="M88 242 L88 258 L438 258 L438 242" fill="none" stroke="rgba(255,255,255,.08)"/>
+      </svg>
+      <div class="cap">The rehearsal gap</div>
+    </div>
+  </div>
+  <div class="foot"><span>01 — Problem</span><div class="dotline"><i class="on"></i><i></i><i></i><i></i><i></i></div></div>
+</section>
+
+<!-- 03 INSIGHT -->
+<section class="slide" data-section="The insight">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">02</span> The insight</p>
+      <h2>Confidence is built in the muscle,<br>not in the <span class="grad-v">margin.</span></h2>
+    </div>
+    <div class="right"><p class="small">People do not learn risk from a definition. They learn it from a drawdown they survive.</p></div>
+  </div>
+  <div class="insight">
+    <div>
+      <p class="quote a" style="--i:0"><span class="q">“</span>Every investor pays for experience.<br>We make the <span class="hl">first tuition</span> cheap.<span class="q">”</span></p>
+      <div class="notesbox a" style="--i:1">The product is not a course with a chart bolted on. It is a market simulator wrapped in curriculum, identity verification and guardian consent — built for the exact moment a student presses <b style="color:var(--ink2)">Buy</b>.</div>
+      <div class="kpis a" style="--i:2">
+        <div class="kpi"><b>0</b><span>real rupees at risk</span></div>
+        <div class="kpi"><b>100%</b><span>of actions journaled</span></div>
+        <div class="kpi"><b>1</b><span>report parents trust</span></div>
+      </div>
+    </div>
+    <div class="cycle a scale" style="--i:1">
+      <div class="ring"></div><div class="ring ring2"></div>
+      <div class="core"><div><b>Practise</b><span>the loop</span></div></div>
+      <div class="orb-item t"><b>Read</b><span>Markets & risk</span></div>
+      <div class="orb-item r"><b>React</b><span>Trade with friction</span></div>
+      <div class="orb-item b"><b>Reflect</b><span>See the behaviour</span></div>
+      <div class="orb-item l"><b>Repeat</b><span>Without the loss</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>02 — Insight</span><div class="dotline"><i></i><i class="on"></i><i></i><i></i><i></i></div></div>
+</section>
+
+<!-- 04 PRODUCT -->
+<section class="slide" data-section="The product">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">03</span> The product</p>
+      <h2>A markets lab with real friction<br>and <span class="grad">zero real money.</span></h2>
+    </div>
+    <div class="right"><p class="small">One system: live simulation, structured learning, verified identity, institutional oversight.</p></div>
+  </div>
+  <div class="feat">
+    <div class="card a" style="--i:0"><div class="ico">IN</div><h4>India + US</h4><p>Switch markets in one click. 31 instruments across stocks, ETFs, funds, crypto and insurance.</p></div>
+    <div class="card a" style="--i:1"><div class="ico">↯</div><h4>Real friction</h4><p>Spreads, fees, slippage and a live engine. Every trade has a cost — like the real thing.</p></div>
+    <div class="card a" style="--i:2"><div class="ico">◎</div><h4>Behavioural index</h4><p>Discipline, patience, risk control and diversification — measured from real decisions, not a quiz.</p></div>
+    <div class="card a" style="--i:3"><div class="ico">⌂</div><h4>Institution console</h4><p>Classrooms, join codes, cohort analytics, competitions and an admin publishing gate.</p></div>
+    <div class="card a" style="--i:4"><div class="ico">⬡</div><h4>Verified humans</h4><p>ID document checks and guardian consent before simulated capital is committed.</p></div>
+    <div class="card a" style="--i:5"><div class="ico">◈</div><h4>Credits, not cash</h4><p>A shop where earned credits unlock trading capital. No deposits, withdrawals or real-money rails.</p></div>
+    <div class="card a" style="--i:6"><div class="ico">↗</div><h4>Reports that travel</h4><p>Portfolio, analysis and behavioural report exported as CSV, print-ready HTML or JSON.</p></div>
+    <div class="card a" style="--i:7"><div class="ico">▤</div><h4>Curriculum included</h4><p>8 modules from first principles to algorithmic thinking, with admin-only video and quiz publishing.</p></div>
+  </div>
+  <div class="callout a" style="--i:8"><b>Starting point</b> Every student begins at zero invested — ₹1,00,000 or $10,000 in simulated capital, not a fake winning portfolio.</div>
+  <div class="foot"><span>03 — Product</span><div class="dotline"><i></i><i></i><i class="on"></i><i></i><i></i></div></div>
+</section>
+
+<!-- 05 INTERFACE -->
+<section class="slide" data-section="Product interface">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">04</span> Product interface</p>
+      <h2>Built to feel like a terminal.<br>Designed to <span class="grad">teach.</span></h2>
+    </div>
+    <div class="right"><p class="small">The same surface for trading, learning and reporting. No mode switching, no dead ends.</p></div>
+  </div>
+  <div class="prod-split">
+    <div class="mini-tape a left" style="--i:0">
+      <div class="hrow"><span>Live market · India</span><span class="pill g">Engine online</span></div>
+      <div class="tape-row" style="border-top:0"><div><b>RELIANCE</b><div class="nm">Energy · IN</div></div><div class="nm">NSE</div><div class="px">₹2,941.20</div></div>
+      <div class="tape-row"><div><b>TCS</b><div class="nm">Technology · IN</div></div><div class="nm">NSE</div><div class="px">₹4,112.55</div></div>
+      <div class="tape-row"><div><b>HDFCBANK</b><div class="nm">Financials · IN</div></div><div class="nm">NSE</div><div class="px">₹1,684.10</div></div>
+      <div class="tape-row"><div><b>AAPL</b><div class="nm">Technology · US</div></div><div class="nm">NASDAQ</div><div class="px">$232.40</div></div>
+      <div class="tape-row"><div><b>NVDA</b><div class="nm">Technology · US</div></div><div class="nm">NASDAQ</div><div class="px">$138.90</div></div>
+      <div class="tape-row"><div><b>BTC</b><div class="nm">Crypto · Global</div></div><div class="nm">24/7</div><div class="px">$67,240</div></div>
+      <div class="hrow" style="margin:16px 0 0;padding-top:14px;border-top:1px solid var(--line)"><span>Order ticket</span><span class="pill">Market · Delivery</span></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <div class="pill" style="flex:1;justify-content:center;padding:9px">6 shares</div>
+        <div class="pill" style="flex:1;justify-content:center;padding:9px">₹17,647</div>
+        <div class="pill g" style="flex:1;justify-content:center;padding:9px">Buy</div>
+      </div>
+    </div>
+    <div>
+      <div class="card pad a right" style="--i:1;margin-bottom:16px">
+        <div class="kicker">Behavioural report · live</div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:20px">
+          <div><div class="big" style="font-size:52px">82<span style="font-size:18px;color:var(--muted)"> / 100</span></div><p class="small" style="margin-top:8px">Weighted across available behaviour signals, with coverage stated.</p></div>
+          <div class="pill g">Coverage 74%</div>
+        </div>
+        <div class="bars" style="margin-top:22px">
+          <div class="bar-row" style="--i:0"><span>Discipline</span><div class="tr"><i style="--w:88%"></i></div><b>88</b></div>
+          <div class="bar-row" style="--i:1"><span>Patience</span><div class="tr"><i style="--w:76%"></i></div><b>76</b></div>
+          <div class="bar-row" style="--i:2"><span>Risk control</span><div class="tr"><i style="--w:81%"></i></div><b>81</b></div>
+          <div class="bar-row" style="--i:3"><span>Diversification</span><div class="tr"><i style="--w:69%"></i></div><b>69</b></div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px" class="a right" data-ani>
+        <div class="card pad" style="padding:22px"><div class="kicker">Classroom</div><div class="big" style="font-size:28px">Class 11A</div><p class="small" style="margin-top:7px">28 students · 1 competition live</p></div>
+        <div class="card pad" style="padding:22px"><div class="kicker">Guardian</div><div class="big" style="font-size:28px;color:var(--green2)">Approved</div><p class="small" style="margin-top:7px">Consent signed via secure link</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>04 — Interface</span><div class="dotline"><i></i><i></i><i></i><i class="on"></i><i></i></div></div>
+</section>
+
+<!-- 06 HOW IT WORKS -->
+<section class="slide" data-section="The journey">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">05</span> The journey</p>
+      <h2>From sign-up to a report<br>a parent can <span class="grad">read.</span></h2>
+    </div>
+    <div class="right"><p class="small">Verification is required only when a student commits capital. Opening the app stays frictionless.</p></div>
+  </div>
+  <div class="steps">
+    <div class="step a" style="--i:0"><div class="n">01</div><h4>Sign in</h4><p>Email, password or Google. Session only — every visit starts with a real sign-in.</p><span class="tag">No silent auto-login</span></div>
+    <div class="step a" style="--i:1"><div class="n">02</div><h4>Verify</h4><p>Name and address must match a readable document. The image is deleted after checking.</p><span class="tag">Only before capital</span></div>
+    <div class="step a" style="--i:2"><div class="n">03</div><h4>Start clean</h4><p>Zero invested. ₹1,00,000 or $10,000 simulated. Every position must be earned.</p><span class="tag">No fake portfolio</span></div>
+    <div class="step a" style="--i:3"><div class="n">04</div><h4>Trade & learn</h4><p>Buy across five asset classes, complete modules, join classroom competitions.</p><span class="tag">Live engine</span></div>
+    <div class="step a" style="--i:4"><div class="n">05</div><h4>Reflect</h4><p>Export the behavioural index, portfolio analysis and decision history.</p><span class="tag">CSV · HTML · JSON</span></div>
+  </div>
+  <div class="callout a" style="--i:5"><b>Guardian gate</b> A shareable consent link lets a parent or guardian approve participation asynchronously — with a logged decision, not a checkbox.</div>
+  <div class="callout a" style="--i:6;border-color:rgba(139,123,255,.22);background:rgba(139,123,255,.05)"><b style="color:var(--violet2)">Admin gate</b> Video lessons and quizzes are published by the administrator only — students see what has been approved.</div>
+  <div class="foot"><span>05 — Journey</span><div class="dotline"><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 07 TRUST -->
+<section class="slide" data-section="Trust layer">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">06</span> Trust layer</p>
+      <h2>Built for the person<br>who has to say <span class="grad">yes.</span></h2>
+    </div>
+    <div class="right"><p class="small">The parent, the teacher, the principal. Trust is the product moat — not a compliance page.</p></div>
+  </div>
+  <div class="trust-grid trust">
+    <div class="card pad a" style="--i:0">
+      <div class="icon">◉</div><h3>Real identity</h3>
+      <p>OCR reads the document. Name and address must match the account, with a document-number pattern and confidence threshold.</p>
+      <ul><li>Image deleted after verification</li><li>Hash, confidence and checks stored</li><li>Reviewed reasons, never raw pixels</li></ul>
+      <div class="cardfoot">Document verification</div>
+    </div>
+    <div class="card pad a" style="--i:1">
+      <div class="icon">◇</div><h3>Guardian consent</h3>
+      <p>A secure, shareable link lets a guardian approve or decline. The student cannot self-approve, and a second decision is rejected.</p>
+      <ul><li>Asynchronous approval</li><li>Every decision logged</li><li>Notifications on change</li></ul>
+      <div class="cardfoot">Consent infrastructure</div>
+    </div>
+    <div class="card pad a" style="--i:2">
+      <div class="icon">▣</div><h3>Institutional control</h3>
+      <p>Admin-granted access by email. Classroom data is scoped to its owner. Publishing is a deliberate admin action.</p>
+      <ul><li>Role-checked APIs</li><li>IDOR-guarded classroom views</li><li>Admin-only content publishing</li></ul>
+      <div class="cardfoot">Access & governance</div>
+    </div>
+  </div>
+  <div class="callout a" style="--i:3"><b>No real money</b> No deposits. No withdrawals. No brokerage integration. Credits buy simulated capital inside a closed loop.</div>
+  <div class="foot"><span>06 — Trust</span><div class="dotline"><i></i><i></i><i class="on"></i><i></i><i></i></div></div>
+</section>
+
+<!-- 08 BEHAVIOURAL -->
+<section class="slide" data-section="Behavioural index">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">07</span> The moat</p>
+      <h2>We don't just track returns.<br>We track the <span class="grad">investor.</span></h2>
+    </div>
+    <div class="right"><p class="small">Returns can be luck. Behaviour is a signal — and it compounds across every decision a student makes.</p></div>
+  </div>
+  <div class="behav">
+    <div class="a left" style="--i:0">
+      <div class="gauge">
+        <svg viewBox="0 0 340 340" width="340" height="340">
+          <defs><linearGradient id="gg" x1="0" x2="1"><stop offset="0" stop-color="#2fe3a0"/><stop offset=".6" stop-color="#4cc9f0"/><stop offset="1" stop-color="#8b7bff"/></linearGradient></defs>
+          <circle class="track" cx="170" cy="170" r="143"/>
+          <circle class="val" cx="170" cy="170" r="143"/>
+        </svg>
+        <div class="center"><div><b class="grad">82</b><span>Behavioural index</span></div></div>
+      </div>
+    </div>
+    <div>
+      <div class="bars">
+        <div class="bar-row a" style="--i:0"><span>Discipline</span><div class="tr"><i style="--w:88%"></i></div><b>88</b></div>
+        <div class="bar-row a" style="--i:1"><span>Patience</span><div class="tr"><i style="--w:76%"></i></div><b>76</b></div>
+        <div class="bar-row a" style="--i:2"><span>Risk control</span><div class="tr"><i style="--w:81%"></i></div><b>81</b></div>
+        <div class="bar-row a" style="--i:3"><span>Diversification</span><div class="tr"><i style="--w:69%"></i></div><b>69</b></div>
+        <div class="bar-row a" style="--i:4"><span>Learning</span><div class="tr"><i style="--w:90%"></i></div><b>90</b></div>
+      </div>
+      <p class="small a" style="--i:5;margin-top:24px;max-width:520px">The overall score is a weighted average over only the components the student has actually exercised. Coverage is shown, never hidden. No activity, no score.</p>
+      <div class="report-tags a" style="--i:6"><span class="pill g">CSV</span><span class="pill">Print-ready HTML</span><span class="pill v">JSON</span><span class="pill">Per-symbol focus</span></div>
+    </div>
+  </div>
+  <div class="foot"><span>07 — Behaviour</span><div class="dotline"><i></i><i></i><i></i><i class="on"></i><i></i></div></div>
+</section>
+
+
+<!-- 09 INSTITUTION -->
+<section class="slide" data-section="Institution console">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">08</span> The institution</p>
+      <h2>One console for the classroom,<br>the cohort and the <span class="grad">competition.</span></h2>
+    </div>
+    <div class="right"><p class="small">Access is granted per account by the administrator. Students join with a code. Teachers see real activity, not estimates.</p></div>
+  </div>
+  <div class="two" style="align-items:start;padding-top:0">
+    <div>
+      <div class="card pad a" style="--i:0;padding:24px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px"><span class="kicker" style="margin:0">Cohort analytics</span><span class="pill g">Live</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:18px">
+          <div><div class="big" style="font-size:30px">28</div><div class="kicker" style="margin:4px 0 0">Students</div></div>
+          <div><div class="big" style="font-size:30px">74<span style="font-size:14px;color:var(--muted)">%</span></div><div class="kicker" style="margin:4px 0 0">Active this week</div></div>
+          <div><div class="big" style="font-size:30px;color:var(--green2)">81</div><div class="kicker" style="margin:4px 0 0">Avg. behaviour</div></div>
+        </div>
+        <div class="bars">
+          <div class="bar-row" style="--i:0"><span>Discipline</span><div class="tr"><i style="--w:84%"></i></div><b>84</b></div>
+          <div class="bar-row" style="--i:1"><span>Diversification</span><div class="tr"><i style="--w:62%"></i></div><b>62</b></div>
+          <div class="bar-row" style="--i:2"><span>Learning</span><div class="tr"><i style="--w:91%"></i></div><b>91</b></div>
+        </div>
+      </div>
+      <div class="card pad a" style="--i:1;margin-top:16px;padding:22px 24px">
+        <div class="kicker">Classroom · join code</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+          <div class="big mono" style="font-size:30px;letter-spacing:.18em;color:var(--green2)">WHHKE2</div>
+          <span class="pill">Class 11A · 28 seats</span>
+        </div>
+      </div>
+      <div class="callout a" style="--i:2;margin-top:16px"><b>Pricing</b> ₹2,499 / month per institution · ₹599 / month per educator. All console features included.</div>
+    </div>
+    <div class="a right" style="--i:1">
+      <div class="card" style="padding:8px 0;overflow:hidden">
+        <div style="padding:18px 22px 12px;display:flex;justify-content:space-between;align-items:center"><span class="kicker" style="margin:0">Classroom console</span><span class="pill v">Admin granted</span></div>
+        <div style="display:grid;grid-template-columns:1.3fr .8fr .7fr;gap:8px;padding:8px 22px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2)"><span>Student</span><span>Index</span><span>Status</span></div>
+        <div class="tape-row" style="padding:11px 22px;grid-template-columns:1.3fr .8fr .7fr"><div><b>Aarav S.</b><div class="nm">Class 11A</div></div><div class="px" style="text-align:left">86</div><div class="up">Active</div></div>
+        <div class="tape-row" style="padding:11px 22px;grid-template-columns:1.3fr .8fr .7fr"><div><b>Diya M.</b><div class="nm">Class 11A</div></div><div class="px" style="text-align:left">81</div><div class="up">Active</div></div>
+        <div class="tape-row" style="padding:11px 22px;grid-template-columns:1.3fr .8fr .7fr"><div><b>Kabir R.</b><div class="nm">Class 11A</div></div><div class="px" style="text-align:left">77</div><div class="up">Active</div></div>
+        <div class="tape-row" style="padding:11px 22px;grid-template-columns:1.3fr .8fr .7fr"><div><b>Meera T.</b><div class="nm">Class 11A</div></div><div class="px" style="text-align:left">73</div><div class="nm">Review</div></div>
+        <div class="tape-row" style="padding:11px 22px;grid-template-columns:1.3fr .8fr .7fr"><div><b>Rohan V.</b><div class="nm">Class 11A</div></div><div class="px" style="text-align:left">69</div><div class="nm">New</div></div>
+        <div style="padding:16px 22px;display:flex;gap:8px;flex-wrap:wrap"><span class="pill">Create classroom</span><span class="pill">Add student</span><span class="pill">Start competition</span><span class="pill g">Export cohort</span></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:16px">
+        <div class="card pad" style="padding:18px 20px"><div class="kicker">Competitions</div><div style="font-size:12px;color:var(--ink2);line-height:1.45">Snapshotted start, overlap rejected, clean end-state.</div></div>
+        <div class="card pad" style="padding:18px 20px"><div class="kicker">Support inbox</div><div style="font-size:12px;color:var(--ink2);line-height:1.45">Teacher requests routed to the administrator.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>08 — Institution</span><div class="dotline"><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 10 MARKET -->
+<section class="slide" data-section="Why now">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">09</span> Why now</p>
+      <h2>Financial literacy is becoming<br>a <span class="grad">required subject.</span></h2>
+    </div>
+    <div class="right"><p class="small">Curriculum mandates create budget. Budget creates a buyer. The buyer needs evidence.</p></div>
+  </div>
+  <div class="market-grid">
+    <div>
+      <p class="lead">India's NEP 2020 pushed financial literacy into the school conversation. In the US, a growing majority of states now require a standalone personal finance course before graduation.</p>
+      <div class="stat3">
+        <div class="card a" style="--i:0"><div class="big" data-count="250">0<small>M</small></div><p>K-12 students in India</p></div>
+        <div class="card a" style="--i:1"><div class="big" data-count="25">0</div><p>US states with a personal finance requirement</p></div>
+        <div class="card a" style="--i:2"><div class="big" data-count="2">0</div><p>markets, one account — India &amp; US</p></div>
+      </div>
+      <div class="assume a" style="--i:3">Sources: S&amp;P Global FinLit Survey; NEP 2020; Next Gen Personal Finance policy tracking, 2024. Counts are directional, not forecasts.</div>
+    </div>
+    <div class="a right" style="--i:1">
+      <div class="kicker">Bottom-up revenue illustration · annualised</div>
+      <div class="hbar">
+        <div><div class="lbl"><span>500 institutions · ₹2,499/mo</span><b>₹1.50 Cr</b></div><div class="tr"><i style="--w:42%"></i></div></div>
+        <div><div class="lbl"><span>5,000 educators · ₹599/mo</span><b>₹3.59 Cr</b></div><div class="tr"><i class="v" style="--w:100%"></i></div></div>
+        <div><div class="lbl"><span>Illustrative blended ARR</span><b>₹5.09 Cr</b></div><div class="tr"><i class="c" style="--w:100%"></i></div></div>
+      </div>
+      <div class="card pad" style="margin-top:28px;padding:22px 24px">
+        <div class="kicker">The wedge</div>
+        <p style="font-size:13px;color:var(--ink2);line-height:1.55">Start with one teacher and one classroom. Prove engagement and behaviour change. Expand to the department, then the school, then the district — without changing the product.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>09 — Market</span><div class="dotline"><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 11 BUSINESS MODEL -->
+<section class="slide" data-section="Business model">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">10</span> Business model</p>
+      <h2>Simple pricing.<br>Recurring <span class="grad">revenue.</span></h2>
+    </div>
+    <div class="right"><p class="small">Sold to institutions, not to students. The learner never pays to practise.</p></div>
+  </div>
+  <div class="price-grid price">
+    <div class="card hot a" style="--i:0">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span class="pill g">Institution</span><span class="small mono">Most popular</span></div>
+      <div class="amt">₹2,499<span> / month</span></div>
+      <p class="small">For schools, colleges and coaching cohorts. Every console feature included.</p>
+      <ul><li>Unlimited classrooms and join codes</li><li>Cohort analytics and behavioural index</li><li>Competitions with snapshotted starts</li><li>Guardian consent tracking</li><li>Admin-granted educator seats</li></ul>
+    </div>
+    <div class="card a" style="--i:1">
+      <div style="display:flex;justify-content:space-between;align-items:center"><span class="pill v">Educator</span><span class="small mono">Single teacher</span></div>
+      <div class="amt">₹599<span> / month</span></div>
+      <p class="small">For one teacher running one or more classes without a school-wide rollout.</p>
+      <ul><li>One educator account</li><li>Classroom creation and student joins</li><li>Assign modules and track progress</li><li>Export reports for parents</li><li>Upgrade path to institution</li></ul>
+    </div>
+  </div>
+  <div class="econ a" style="--i:2">
+    <div><b>Monthly</b><span>No annual lock-in</span></div>
+    <div><b>Seat expansion</b><span>Revenue grows with adoption</span></div>
+    <div><b>Zero real money</b><span>No deposits or payouts</span></div>
+  </div>
+  <div class="assume a" style="--i:3">Target unit economics, to be validated in pilot: CAC ₹8,000–₹12,000 per institution; payback under 5 months at ₹2,499/month. Credit packs are in-app currency, not a revenue line.</div>
+  <div class="foot"><span>10 — Model</span><div class="dotline"><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 12 GTM -->
+<section class="slide" data-section="Go-to-market">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">11</span> Go-to-market</p>
+      <h2>Land with a teacher.<br>Expand with <span class="grad">evidence.</span></h2>
+    </div>
+    <div class="right"><p class="small">Education sells slowly at the top and quickly at the bottom. We start where the pain is visible.</p></div>
+  </div>
+  <div class="three">
+    <div class="card pad a" style="--i:0;min-height:300px">
+      <div class="pill g">01 · Land</div>
+      <h3 style="margin:18px 0 10px">Teacher-led pilot</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.55">A 30-day classroom pilot with a join code, real student activity and a parent-ready report. No procurement required.</p>
+      <ul style="list-style:none;padding:0;margin:18px 0 0;display:flex;flex-direction:column;gap:9px;font-size:12px;color:var(--ink2)"><li>→ Teacher communities &amp; subject groups</li><li>→ Direct outreach to senior-secondary schools</li><li>→ Free competition as the demo</li></ul>
+    </div>
+    <div class="card pad a" style="--i:1;min-height:300px">
+      <div class="pill v">02 · Expand</div>
+      <h3 style="margin:18px 0 10px">Department to district</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.55">One teacher becomes the internal champion. Cohort analytics make the case to the head of department and then the principal.</p>
+      <ul style="list-style:none;padding:0;margin:18px 0 0;display:flex;flex-direction:column;gap:9px;font-size:12px;color:var(--ink2)"><li>→ Educator to institution upgrade</li><li>→ Cross-class competitions</li><li>→ District-level reporting</li></ul>
+    </div>
+    <div class="card pad a" style="--i:2;min-height:300px">
+      <div class="pill a">03 · Compound</div>
+      <h3 style="margin:18px 0 10px">Trust as distribution</h3>
+      <p style="font-size:13px;color:var(--muted);line-height:1.55">Guardian reports and verified identity make the product referable inside a school network — a channel competitors cannot copy quickly.</p>
+      <ul style="list-style:none;padding:0;margin:18px 0 0;display:flex;flex-direction:column;gap:9px;font-size:12px;color:var(--ink2)"><li>→ Parent word-of-mouth</li><li>→ School network referrals</li><li>→ Certification &amp; showcase events</li></ul>
+    </div>
+  </div>
+  <div class="callout a" style="--i:3"><b>Distribution insight</b> The buyer is an institution, but the champion is a teacher. Product-led pilots convert faster than top-down sales cycles.</div>
+  <div class="foot"><span>11 — GTM</span><div class="dotline"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 13 COMPETITION -->
+<section class="slide" data-section="Competition">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">12</span> Competition</p>
+      <h2>Everyone owns a slice.<br>Nobody owns the <span class="grad">loop.</span></h2>
+    </div>
+    <div class="right"><p class="small">Paper trading lacks pedagogy. Curriculum lacks a live market. Consumer fintech requires real money.</p></div>
+  </div>
+  <div class="tbl a" style="--i:0">
+    <table>
+      <thead><tr><th>Capability</th><th>Paper trading</th><th>Consumer fintech</th><th>Curriculum vendors</th><th class="us">MockTrade Matrix</th></tr></thead>
+      <tbody>
+        <tr><td>Live prices &amp; order friction</td><td class="yes">Yes</td><td class="yes">Yes</td><td class="no">No</td><td class="us">Yes</td></tr>
+        <tr><td>Structured curriculum</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td><td class="us">Yes</td></tr>
+        <tr><td>Guardian consent &amp; identity</td><td class="no">No</td><td class="no">Partial</td><td class="no">No</td><td class="us">Yes</td></tr>
+        <tr><td>Behavioural analytics</td><td class="no">No</td><td class="no">No</td><td class="no">No</td><td class="us">Yes</td></tr>
+        <tr><td>Classroom operations</td><td class="no">No</td><td class="no">No</td><td class="yes">Yes</td><td class="us">Yes</td></tr>
+        <tr><td>India + US in one account</td><td class="no">No</td><td class="no">No</td><td class="no">No</td><td class="us">Yes</td></tr>
+        <tr><td>No real money at risk</td><td class="yes">Yes</td><td class="no">No</td><td class="yes">Yes</td><td class="us">Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="three" style="margin-top:22px">
+    <div class="card pad a" style="--i:1;padding:20px 22px"><div class="kicker">vs. paper trading</div><p style="font-size:12px;color:var(--muted)">A terminal without a teacher, a guardian or a report.</p></div>
+    <div class="card pad a" style="--i:2;padding:20px 22px"><div class="kicker">vs. consumer fintech</div><p style="font-size:12px;color:var(--muted)">Real money is the product. We remove it entirely.</p></div>
+    <div class="card pad a" style="--i:3;padding:20px 22px"><div class="kicker">vs. curriculum</div><p style="font-size:12px;color:var(--muted)">Theory without a market is a PDF with better branding.</p></div>
+  </div>
+  <div class="foot"><span>12 — Competition</span><div class="dotline"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 14 TRACTION -->
+<section class="slide" data-section="Traction">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">13</span> Traction</p>
+      <h2>Shipped.<br>Not <span class="grad">slideware.</span></h2>
+    </div>
+    <div class="right"><p class="small">This deck describes a running product. Every claim below is a route, a table or a test — not a roadmap item.</p></div>
+  </div>
+  <div class="traction">
+    <div>
+      <div class="kpis">
+        <div class="kpi"><b data-count="31">0</b><span>live instruments</span></div>
+        <div class="kpi"><b data-count="14">0</b><span>product routes</span></div>
+        <div class="kpi"><b data-count="36">0</b><span>QA checks passed</span></div>
+      </div>
+      <div class="qa a" style="--i:2"><b>36/36</b><span>Institutional QA checks passed across grant/revoke, permissions, classroom flows, competitions, support and responsive layouts.</span></div>
+      <div class="callout a" style="--i:3"><b>Live</b> Running on a production build with a live market engine, Socket.IO updates and a persistent SQLite store.</div>
+    </div>
+    <div class="checklist a right" style="--i:1">
+      <div>Email, password &amp; Google sign-in</div>
+      <div>Session-only login</div>
+      <div>Real ID document verification</div>
+      <div>Guardian consent links</div>
+      <div>Live India + US engine</div>
+      <div>Five asset classes</div>
+      <div>Order fees, spreads &amp; slippage</div>
+      <div>Credits shop</div>
+      <div>Portfolio &amp; behaviour reports</div>
+      <div>CSV / HTML / JSON export</div>
+      <div>Institution console</div>
+      <div>Classroom competitions</div>
+      <div>Admin content publishing</div>
+      <div>Admin grant / revoke by email</div>
+      <div>Role-checked APIs (403)</div>
+      <div>Docker + persistent volume</div>
+    </div>
+  </div>
+  <div class="foot"><span>13 — Traction</span><div class="dotline"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 15 ROADMAP -->
+<section class="slide" data-section="Roadmap">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">14</span> Roadmap</p>
+      <h2>From private beta<br>to <span class="grad">standard issue.</span></h2>
+    </div>
+    <div class="right"><p class="small">Sequenced around one metric: classrooms that renew because students actually use the product.</p></div>
+  </div>
+  <div class="road">
+    <div class="phase a" style="--i:0"><div class="dot"></div><span class="when">Now · Q1</span><h4>Private beta</h4><p>Convert design partners into paying pilots.</p><ul><li>10 pilot classrooms</li><li>Parent report feedback</li><li>Teacher onboarding</li></ul></div>
+    <div class="phase a" style="--i:1"><div class="dot"></div><span class="when">6 months</span><h4>Product depth</h4><p>Make the classroom indispensable.</p><ul><li>Mobile PWA</li><li>Teacher content tools</li><li>3 Indian languages</li></ul></div>
+    <div class="phase a" style="--i:2"><div class="dot"></div><span class="when">12 months</span><h4>Institutional scale</h4><p>Move from classrooms to networks.</p><ul><li>District dashboards</li><li>Certification pathway</li><li>US school pilot</li></ul></div>
+    <div class="phase a" style="--i:3"><div class="dot"></div><span class="when">24 months</span><h4>Distribution</h4><p>Become infrastructure for others.</p><ul><li>Partner API</li><li>Curriculum marketplace</li><li>Assessment licensing</li></ul></div>
+  </div>
+  <div class="three" style="margin-top:46px">
+    <div class="card pad a" style="--i:4"><div class="kicker">North-star metric</div><div class="big" style="font-size:26px">Weekly active classrooms</div><p class="small" style="margin-top:8px">A classroom counts only when students trade, learn and return.</p></div>
+    <div class="card pad a" style="--i:5"><div class="kicker">Expansion signal</div><div class="big" style="font-size:26px">Seats per institution</div><p class="small" style="margin-top:8px">Growth inside an account is cheaper than winning a new one.</p></div>
+    <div class="card pad a" style="--i:6"><div class="kicker">Retention proof</div><div class="big" style="font-size:26px">Renewal at month 6</div><p class="small" style="margin-top:8px">The only honest measure of whether the pilot worked.</p></div>
+  </div>
+  <div class="foot"><span>14 — Roadmap</span><div class="dotline"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 16 ASK -->
+<section class="slide" data-section="Team & ask">
+  <div class="top">
+    <div>
+      <p class="eyebrow"><span class="no">15</span> The ask</p>
+      <h2>Fund the first<br><span class="grad">500 classrooms.</span></h2>
+    </div>
+    <div class="right"><p class="small">A focused pre-seed to prove retention, not to build more surface area.</p></div>
+  </div>
+  <div class="team">
+    <div>
+      <div class="card pad a" style="--i:0;padding:26px">
+        <div class="kicker">Founder</div>
+        <div class="founder">
+          <div class="avatar">PR</div>
+          <div><b>Pranav Ram</b><span>Founder &amp; engineer</span></div>
+        </div>
+        <p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-top:18px">Designed and built the full system end-to-end: market engine, identity verification, guardian consent, institutional console, reporting and deployment. The next hire is go-to-market, not another engineer.</p>
+        <div style="display:flex;gap:8px;margin-top:18px;flex-wrap:wrap"><span class="pill g">Full-stack</span><span class="pill">Product</span><span class="pill v">Design</span><span class="pill">Infra</span></div>
+      </div>
+      <div class="card pad a" style="--i:1;margin-top:14px;padding:20px 24px">
+        <div class="kicker">Hiring plan</div>
+        <p style="font-size:12.5px;color:var(--ink2);line-height:1.55">Curriculum lead (part-time) · institutional sales (full-time) · contract designer.</p>
+      </div>
+    </div>
+    <div class="a right" style="--i:1">
+      <div class="askbox">
+        <div class="kicker">Pre-seed · 18-month runway</div>
+        <div class="amt">₹3.5 Cr <span>≈ $420K</span></div>
+        <p class="small">Priced round or safe. Milestones: 100 paying institutions, 25,000 activated students, ₹1.5 Cr ARR trajectory.</p>
+        <div class="alloc"><i class="a1"></i><i class="a2"></i><i class="a3"></i><i class="a4"></i></div>
+        <div class="legend">
+          <div><i style="background:var(--green)"></i>40% Engineering &amp; product</div>
+          <div><i style="background:var(--violet)"></i>35% Sales &amp; marketing</div>
+          <div><i style="background:var(--cyan)"></i>15% Curriculum &amp; content</div>
+          <div><i style="background:var(--amber)"></i>10% Operations &amp; compliance</div>
+        </div>
+      </div>
+      <div class="card pad a" style="--i:2;margin-top:14px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center">
+        <span class="small">What ₹3.5 Cr buys</span>
+        <span class="mono" style="font-size:11px;color:var(--green2)">100 institutions · 25k students · 18 months</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>15 — Ask</span><div class="dotline"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="on"></i></div></div>
+</section>
+
+<!-- 17 CLOSE -->
+<section class="slide close" data-section="Close">
+  <div class="ringbg"><i></i></div>
+  <div class="close-in">
+    <div class="a fade" style="--i:0"><span class="badge-live"><span class="dot"></span>Live demo available</span></div>
+    <h1 class="a" style="--i:1">Every investor loses<br>money <span class="grad">once.</span></h1>
+    <p class="lead a" style="--i:2">We make sure it happens at seventeen, in a simulation, with a teacher and a guardian in the room — not at twenty-five, with a real salary.</p>
+    <div class="contact a" style="--i:3">
+      <span class="pill g">admin@mocktrade.app</span>
+      <span class="pill">mocktrade.app</span>
+      <span class="pill v">Pranav Ram · Founder</span>
+    </div>
+    <div class="a" style="--i:4;margin-top:34px;font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--muted2)">Learn to lose. Before it costs anything.</div>
+  </div>
+  <div class="foot" style="justify-content:center"><span>MockTrade Matrix · 2026</span></div>
+</section>
+
+<div id="help">
+  <div class="box">
+    <h3>Presenter controls</h3>
+    <p>Built for a live room and a PDF export.</p>
+    <div class="k"><span>Next / previous slide</span><b>→ ← · space</b></div>
+    <div class="k"><span>Jump to first / last</span><b>home · end</b></div>
+    <div class="k"><span>Fullscreen</span><b>F</b></div>
+    <div class="k"><span>Export to PDF</span><b>P</b></div>
+    <div class="k"><span>Close this panel</span><b>esc</b></div>
+    <div class="k"><span>Touch</span><b>swipe</b></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const stage=document.getElementById('stage');
+  const slides=[...document.querySelectorAll('.slide')];
+  const hudSection=document.getElementById('hudSection');
+  const hudNow=document.getElementById('hudNow');
+  const hudTotal=document.getElementById('hudTotal');
+  const bar=document.querySelector('#bar i');
+  const help=document.getElementById('help');
+  const pad=n=>String(n).padStart(2,'0');
+  let index=0, busy=false;
+
+  // progress bar element (created here so the slide markup stays clean)
+  const progress=document.createElement('div');
+  progress.id='bar'; progress.innerHTML='<i></i>'; document.getElementById('stage').appendChild(progress);
+  const fill=progress.querySelector('i');
+
+  const hint=document.createElement('div');
+  hint.id='hint'; hint.innerHTML='<span><kbd>←</kbd> <kbd>→</kbd> navigate</span><span><kbd>F</kbd> fullscreen</span><span><kbd>P</kbd> PDF</span><span><kbd>H</kbd> help</span>';
+  stage.appendChild(hint);
+  hudTotal.textContent=pad(slides.length);
+
+  function fit(){
+    const s=Math.min(window.innerWidth/1600, window.innerHeight/900);
+    stage.style.transform='scale('+s+')';
+  }
+  window.addEventListener('resize',fit); fit();
+
+  function countUp(root){
+    root.querySelectorAll('[data-count]').forEach(el=>{
+      if(el.dataset.done) return;
+      el.dataset.done='1';
+      const target=parseFloat(el.dataset.count);
+      const node=el.firstChild;
+      if(!node||node.nodeType!==3) return;
+      const start=performance.now(), dur=1400;
+      function tick(t){
+        const p=Math.min(1,(t-start)/dur);
+        const eased=1-Math.pow(1-p,3);
+        node.nodeValue=String(Math.round(target*eased));
+        if(p<1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  function show(n, updateHash){
+    n=Math.max(0,Math.min(slides.length-1,n));
+    if(n===index && slides[n].classList.contains('active')) return;
+    const prev=slides[index];
+    if(prev && prev!==slides[n]) prev.classList.remove('active');
+    index=n;
+    const slide=slides[n];
+    slide.classList.add('active');
+    document.querySelectorAll('.slide').forEach(s=>{ if(s!==slide) s.classList.remove('active'); });
+    hudSection.textContent=slide.dataset.section||'';
+    hudNow.textContent=pad(n+1);
+    fill.style.width=((n+1)/slides.length*100)+'%';
+    countUp(slide);
+    if(updateHash!==false) history.replaceState(null,'','#'+(n+1));
+  }
+
+  function next(){ if(index<slides.length-1) show(index+1); }
+  function prev(){ if(index>0) show(index-1); }
+
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key==='PageDown'||e.key===' '){ e.preventDefault(); next(); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ e.preventDefault(); prev(); }
+    else if(e.key==='Home'){ e.preventDefault(); show(0); }
+    else if(e.key==='End'){ e.preventDefault(); show(slides.length-1); }
+    else if(e.key==='f'||e.key==='F'){ if(!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); }
+    else if(e.key==='p'||e.key==='P'){ e.preventDefault(); window.print(); }
+    else if(e.key==='h'||e.key==='H'||e.key==='?'){ help.classList.toggle('on'); }
+    else if(e.key==='Escape'){ help.classList.remove('on'); }
+  });
+
+  help.addEventListener('click',()=>help.classList.remove('on'));
+
+  // touch
+  let tx=0,ty=0;
+  stage.addEventListener('touchstart',e=>{ tx=e.changedTouches[0].clientX; ty=e.changedTouches[0].clientY; },{passive:true});
+  stage.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>50 && Math.abs(dx)>Math.abs(dy)) dx<0?next():prev();
+  },{passive:true});
+
+  // click right/left thirds to advance (ignores links/buttons)
+  stage.addEventListener('click',e=>{
+    if(e.target.closest('a,button,#help')) return;
+    const x=e.clientX/window.innerWidth;
+    if(x>0.72) next();
+    else if(x<0.12) prev();
+  });
+
+  // hash deep link
+  const fromHash=parseInt(location.hash.replace('#',''),10);
+  index=0;
+  slides[0].classList.add('active');
+  if(fromHash&&fromHash>=1&&fromHash<=slides.length){ slides[0].classList.remove('active'); show(fromHash-1,false); }
+  else { show(0,false); }
+  document.body.classList.add('ready');
+  window.deck={show,next,prev,slides};
+})();
+</script>
+
+
+</div></div>
+<div id="grain"></div>
+</body>
+</html>

@@ -1,0 +1,34 @@
+[
+  {
+    "id": "fifty",
+    "name": "50:50",
+    "short": "50:50",
+    "description": "Removes two wrong answers on the question you are on.",
+    "cost": 15,
+    "tone": "cyan"
+  },
+  {
+    "id": "skip",
+    "name": "Skip",
+    "short": "Skip",
+    "description": "Burns a question you cannot answer. No points, no penalty.",
+    "cost": 20,
+    "tone": "violet"
+  },
+  {
+    "id": "freeze",
+    "name": "Freeze",
+    "short": "Freeze",
+    "description": "Cuts 4 seconds off your opponent's current question.",
+    "cost": 25,
+    "tone": "blue"
+  },
+  {
+    "id": "double",
+    "name": "Double",
+    "short": "2x",
+    "description": "Your next correct answer scores twice.",
+    "cost": 35,
+    "tone": "amber"
+  }
+]

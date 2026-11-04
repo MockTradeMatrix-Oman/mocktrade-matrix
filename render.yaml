@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: mocktrade-matrix
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: NODE_ENV
+        value: production
+      # Free instances have an ephemeral disk: the SQLite file is restored from
+      # and uploaded to object storage (see lib/backup.mjs). Set both in the
+      # Render dashboard; never commit them.
+      - key: BACKUP_URL
+        sync: false
+      - key: BACKUP_TOKEN
+        sync: false
+      - key: BACKUP_APIKEY
+        sync: false
+      - key: BACKUP_INTERVAL_MS
+        value: "300000"

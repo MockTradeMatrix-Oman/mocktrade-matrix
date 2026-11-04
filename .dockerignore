@@ -1,0 +1,16 @@
+.git
+.github
+.next
+node_modules
+npm-debug.log*
+yarn-error.log*
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+mocktrade.db
+mocktrade.db-*
+data
+coverage
+.DS_Store
+Thumbs.db
