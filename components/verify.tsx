@@ -26,11 +26,14 @@ type VerifyUser = {
 };
 
 const STEPS = [
-  { id: 0, label: "Identity", icon: ScanFace },
-  { id: 1, label: "Guardian", icon: Users },
-  { id: 2, label: "Terms", icon: FileText },
-  { id: 3, label: "Finish", icon: CheckCircle2 },
+  { id: 0, label: "Start", icon: ShieldCheck },
+  { id: 1, label: "Identity", icon: ScanFace },
+  { id: 2, label: "Guardian", icon: Users },
+  { id: 3, label: "Agreements", icon: FileText },
+  { id: 4, label: "Finish", icon: CheckCircle2 },
 ];
+
+type AgreementKey = "simulation" | "risk" | "data" | "age";
 
 const DOCS = [
   { id: "aadhaar", label: "Aadhaar", note: "India · 12-digit", hint: "Front side: your name, full address and the 12-digit Aadhaar number must all be visible." },
@@ -58,6 +61,29 @@ const CHECK_LABELS: Array<{ key: CheckKey; label: string }> = [
   { key: "number", label: "Document number detected" },
 ];
 
+const AGREEMENTS: Array<{ key: AgreementKey; title: string; body: string }> = [
+  {
+    key: "simulation",
+    title: "This is a simulation, not a real broker",
+    body: "All prices, orders and portfolios are simulated. No real money, securities or crypto is ever bought, sold or held for you.",
+  },
+  {
+    key: "risk",
+    title: "Nothing here is financial advice",
+    body: "Scores, forecasts and rankings are educational. They are not a recommendation to buy or sell any asset, and simulated results do not predict real outcomes.",
+  },
+  {
+    key: "data",
+    title: "I consent to my ID being read on this device",
+    body: "The document image is deleted immediately after the check. Only my verified name, address, document type, a one-way hash and the result are stored.",
+  },
+  {
+    key: "age",
+    title: "My age and guardian details are accurate",
+    body: "If I am under 18, a guardian must approve access. I confirm the details I gave are true and that I can be asked to re-verify.",
+  },
+];
+
 function formatBytes(bytes: number) {
   if (bytes >= 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   return `${Math.max(1, Math.round(bytes / 1024))} KB`;
@@ -69,7 +95,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
   const declined = user.guardian_status === "declined";
   const needsGuardian = user.guardian_status === "pending" || declined;
 
-  const initialStep = !user.id_verified ? 0 : needsGuardian ? 1 : user.terms_accepted ? 3 : 2;
+  const initialStep = !user.id_verified ? 0 : needsGuardian ? 2 : user.terms_accepted ? 4 : 3;
   const [step, setStep] = useState(initialStep);
   const [doc, setDoc] = useState("aadhaar");
   const [scanning, setScanning] = useState(false);
@@ -83,11 +109,13 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
   const [requestUrl, setRequestUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [guardianApproved, setGuardianApproved] = useState(user.guardian_status === "approved" || user.guardian_status === "not_required");
-  const [terms, setTerms] = useState({
-    simulation: Boolean(user.terms_accepted),
-    risk: Boolean(user.terms_accepted),
-    data: Boolean(user.terms_accepted),
+  const [agreements, setAgreements] = useState<Record<AgreementKey, "yes" | "no" | null>>({
+    simulation: null,
+    risk: null,
+    data: null,
+    age: null,
   });
+  const [confirmText, setConfirmText] = useState("");
   const [busy, setBusy] = useState(false);
 
   const uploadRef = useRef<HTMLInputElement>(null);
@@ -95,23 +123,25 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
   const previewRef = useRef<string | null>(null);
 
   const activeDoc = DOCS.find((d) => d.id === doc) ?? DOCS[0];
-  const allTerms = terms.simulation && terms.risk && terms.data;
+  const allAgreed = AGREEMENTS.every((a) => agreements[a.key] === "yes");
+  const signed = allAgreed && confirmText.trim().toUpperCase() === "YES";
   const canContinue = useMemo(() => {
-    if (step === 0) return scanDone;
-    if (step === 1) return guardianApproved || !needsGuardian;
-    if (step === 2) return allTerms;
+    if (step === 0) return true;
+    if (step === 1) return scanDone;
+    if (step === 2) return guardianApproved || !needsGuardian;
+    if (step === 3) return signed;
     return true;
-  }, [step, scanDone, guardianApproved, needsGuardian, allTerms]);
+  }, [step, scanDone, guardianApproved, needsGuardian, signed]);
 
   useEffect(() => () => {
     if (previewRef.current) URL.revokeObjectURL(previewRef.current);
   }, []);
 
-  async function post(action: string) {
+  async function post(action: string, extra: Record<string, unknown> = {}) {
     const res = await fetch("/api/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
+      body: JSON.stringify({ action, ...extra }),
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error ?? "Something went wrong.");
@@ -257,11 +287,12 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
   }, []);
 
   async function acceptTerms() {
+    if (!signed) return;
     setBusy(true);
     try {
-      await post("terms");
-      setStep(3);
-      push({ tone: "success", title: "Terms accepted", body: "You are ready to enter the matrix." });
+      await post("terms", { agreements, confirmation: confirmText.trim().toUpperCase() });
+      setStep(4);
+      push({ tone: "success", title: "Signed and recorded", body: "Every agreement was accepted. Your account is now unlocked." });
     } catch (err: any) {
       push({ tone: "error", title: "Could not save", body: err.message });
     } finally {
@@ -269,7 +300,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
     }
   }
 
-  const pct = ((step + (canContinue ? 1 : 0)) / 4) * 100;
+  const pct = (step / 4) * 100;
   const verifiedName = result?.ok ? result.name : user.verified_name;
   const verifiedAddress = result?.ok ? result.address : user.verified_address;
 
@@ -297,7 +328,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
             <Progress value={pct} className="mt-2.5" />
             <div className="mt-3 flex items-center justify-between gap-1">
               {STEPS.map((s) => {
-                const done = s.id < step || (s.id === 3 && step === 3);
+                const done = s.id < step;
                 const active = s.id === step;
                 return (
                   <div key={s.id} className="flex min-w-0 flex-1 flex-col items-center gap-1">
@@ -323,14 +354,14 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
             <div className="mt-4">
               <Progress value={pct} />
               <div className="mt-1.5 flex items-center justify-between text-[9.5px] text-muted">
-                <span>Step {Math.min(step + 1, 4)} of 4</span>
+                <span>Step {Math.min(step + 1, 5)} of 5</span>
                 <span className="num">{Math.round(pct)}%</span>
               </div>
             </div>
 
             <div className="mt-5 space-y-1">
               {STEPS.map((s) => {
-                const done = s.id < step || (s.id === 3 && step === 3);
+                const done = s.id < step;
                 const active = s.id === step;
                 return (
                   <div key={s.id} className={cn("flex items-center gap-2.5 rounded-lg px-2.5 py-2",
@@ -361,21 +392,68 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                 <Lock size={11} /> Secure onboarding
               </div>
               <h1 className="mt-2 text-[22px] font-semibold tracking-tight">
-                {step === 0 && "Verify your identity"}
-                {step === 1 && "Guardian consent"}
-                {step === 2 && "Simulation terms"}
-                {step === 3 && "You are in."}
+                {step === 0 && "Before you start"}
+                {step === 1 && "Verify your identity"}
+                {step === 2 && "Guardian consent"}
+                {step === 3 && "Agreements and consent"}
+                {step === 4 && "You're in."}
               </h1>
               <p className="mt-1 max-w-lg text-[12px] leading-relaxed text-muted">
-                {step === 0 && "Upload a real government ID. We read it on this machine, keep only your name and address, and delete the image immediately. If the name and address are not found, access stays locked."}
-                {step === 1 && "Because you are under 18, a guardian must approve simulated trading access before you can place orders."}
-                {step === 2 && "Three confirmations, then the market opens. Read them — they define what this platform is and is not."}
-                {step === 3 && "Your account is verified and your simulation is funded. Time to learn by doing."}
+                {step === 0 && "Four short steps: identity, guardian consent if you are under 18, agreements, then access. Nothing is skipped — the rest of the app stays locked until every step is complete."}
+                {step === 1 && "Upload a real government ID. We read it on this machine, keep only your name and address, and delete the image immediately. If the name and address are not found, access stays locked."}
+                {step === 2 && "Because you are under 18, a guardian must approve simulated trading access before you can place orders."}
+                {step === 3 && "Read each statement and answer it explicitly. Then type YES to sign. The confirmation is recorded with a timestamp against your account."}
+                {step === 4 && "Your account is verified and your simulation is funded. Time to learn by doing."}
               </p>
             </div>
 
             <div className="p-4 sm:p-6">
               {step === 0 && (
+                <div className="animate-fade-in space-y-3">
+                  <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+                    <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted">Have these ready</div>
+                    <ul className="mt-2.5 space-y-2">
+                      {[
+                        "One government photo ID — Aadhaar, PAN, passport or driving licence.",
+                        "A clear, well-lit photo where the name and address are readable.",
+                        "Two minutes without interruptions.",
+                        "If you are under 18: a guardian's email address for consent.",
+                      ].map((line) => (
+                        <li key={line} className="flex items-start gap-2 text-[11.5px] leading-relaxed text-[#c6cfdd]">
+                          <span className="mt-[3px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-[rgba(47,227,160,.16)] text-[#5beeb9]">
+                            <Check size={9} strokeWidth={3} />
+                          </span>
+                          {line}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+                    <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted">What happens, in order</div>
+                    <ol className="mt-2.5 space-y-2">
+                      {[
+                        "Identity — your document is read on this device, then deleted.",
+                        "Guardian — only if you are under 18. They approve through a private link.",
+                        "Agreements — four statements, each answered explicitly, then you type YES.",
+                        "Access — the dashboard, trading and the arena unlock.",
+                      ].map((line, i) => (
+                        <li key={line} className="flex items-start gap-2 text-[11.5px] leading-relaxed text-[#c6cfdd]">
+                          <span className="mt-[1px] flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-white/15 text-[8.5px] font-bold text-muted">{i + 1}</span>
+                          {line}
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  <p className="flex items-start gap-1.5 text-[10px] leading-relaxed text-muted/70">
+                    <ShieldCheck size={11} className="mt-0.5 shrink-0 text-[#5beeb9]" />
+                    You can stop at any point and come back. Nothing is shared with third parties, and no real capital is ever at risk.
+                  </p>
+                </div>
+              )}
+
+              {step === 1 && (
                 <div className="animate-fade-in">
                   {scanDone ? (
                     <div className="rounded-2xl border border-[rgba(47,227,160,.24)] bg-[rgba(47,227,160,.05)] p-6 text-center">
@@ -399,12 +477,9 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                         )}
                       </div>
                       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-                        <button onClick={() => setStep(1)} className="btn btn-primary btn-sm">
-                          Continue <ArrowRight size={13} />
+                        <button onClick={() => setStep(2)} className="btn btn-primary btn-sm">
+                          Continue to guardian step <ArrowRight size={13} />
                         </button>
-                        <Link href="/dashboard" className="btn btn-ghost btn-sm">
-                          Back to dashboard
-                        </Link>
                       </div>
                     </div>
                   ) : (
@@ -555,7 +630,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                 </div>
               )}
 
-              {step === 1 && (
+              {step === 2 && (
                 <div className="animate-fade-in">
                   {!needsGuardian || guardianApproved ? (
                     <div className="rounded-2xl border border-[rgba(47,227,160,.22)] bg-[rgba(47,227,160,.05)] p-6 text-center">
@@ -649,38 +724,108 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                 </div>
               )}
 
-              {step === 2 && (
-                <div className="animate-fade-in space-y-2.5">
-                  {[
-                    {
-                      key: "simulation" as const,
-                      title: "This is a simulation",
-                      body: "All prices, trades and portfolios are simulated. No real money, securities or crypto are ever bought or sold.",
-                    },
-                    {
-                      key: "risk" as const,
-                      title: "Nothing here is financial advice",
-                      body: "Forecasts, scores and rankings are educational tools. They are not recommendations to buy or sell any asset.",
-                    },
-                    {
-                      key: "data" as const,
-                      title: "Minimal data, local storage",
-                      body: "Your ID image is deleted after the check. Only your verified name, address, document type and the result are kept on this device.",
-                    },
-                  ].map((t) => (
-                    <button key={t.key} onClick={() => setTerms((s) => ({ ...s, [t.key]: !s[t.key] }))}
-                      className={cn("flex w-full items-start gap-3 rounded-xl border p-4 text-left transition",
-                        terms[t.key] ? "border-[rgba(47,227,160,.28)] bg-[rgba(47,227,160,.05)]" : "border-white/[0.07] bg-white/[0.02] hover:border-white/15")}>
-                      <span className={cn("mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
-                        terms[t.key] ? "border-[#2fe3a0] bg-[#2fe3a0] text-[#04140d]" : "border-white/20 bg-white/[0.03]")}>
-                        {terms[t.key] && <Check size={12} strokeWidth={3} />}
-                      </span>
-                      <div>
-                        <div className="text-[12px] font-semibold">{t.title}</div>
-                        <div className="mt-1 text-[10.5px] leading-relaxed text-muted">{t.body}</div>
+              {step === 3 && (
+                <div className="animate-fade-in space-y-3">
+                  <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3.5">
+                    <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted">Signing for</div>
+                    <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
+                      <div className="flex items-center justify-between gap-3 text-[10.5px]">
+                        <span className="text-muted">Account</span>
+                        <span className="truncate font-medium">{user.name}</span>
                       </div>
-                    </button>
-                  ))}
+                      <div className="flex items-center justify-between gap-3 text-[10.5px]">
+                        <span className="text-muted">Email</span>
+                        <span className="truncate font-medium">{user.email}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-[10.5px]">
+                        <span className="text-muted">Identity</span>
+                        <span className={cn("font-medium", scanDone ? "text-[#8df5d0]" : "text-[#ffd08d]")}>{scanDone ? "Verified" : "Pending"}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 text-[10.5px]">
+                        <span className="text-muted">Guardian</span>
+                        <span className={cn("font-medium", guardianApproved ? "text-[#8df5d0]" : "text-[#ffd08d]")}>
+                          {guardianApproved ? "Approved" : needsGuardian ? "Pending" : "Not required"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {AGREEMENTS.map((a, i) => {
+                    const value = agreements[a.key];
+                    return (
+                      <div
+                        key={a.key}
+                        className={cn(
+                          "rounded-xl border p-4 transition",
+                          value === "yes"
+                            ? "border-[rgba(47,227,160,.28)] bg-[rgba(47,227,160,.05)]"
+                            : value === "no"
+                              ? "border-[rgba(255,93,122,.3)] bg-[rgba(255,93,122,.05)]"
+                              : "border-white/[0.07] bg-white/[0.02]"
+                        )}
+                      >
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border border-white/15 bg-white/[0.03] text-[10px] font-bold text-muted">
+                            {i + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-[12px] font-semibold">{a.title}</div>
+                            <p className="mt-1 text-[10.5px] leading-relaxed text-muted">{a.body}</p>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 pl-8">
+                          <button
+                            type="button"
+                            onClick={() => setAgreements((s) => ({ ...s, [a.key]: "yes" }))}
+                            aria-pressed={value === "yes"}
+                            className={cn("btn btn-sm", value === "yes" ? "btn-primary" : "btn-dark")}
+                          >
+                            <Check size={12} strokeWidth={3} /> Yes, I agree
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setAgreements((s) => ({ ...s, [a.key]: "no" }))}
+                            aria-pressed={value === "no"}
+                            className={cn("btn btn-sm", value === "no" ? "btn-danger" : "btn-dark")}
+                          >
+                            <XCircle size={12} /> No
+                          </button>
+                          {value && (
+                            <span className={cn("ml-auto text-[10px] font-medium", value === "yes" ? "text-[#8df5d0]" : "text-[#ffb3c0]")}>
+                              {value === "yes" ? "Accepted" : "Declined"}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {Object.values(agreements).includes("no") && (
+                    <div className="rounded-xl border border-[rgba(255,93,122,.28)] bg-[rgba(255,93,122,.06)] p-3.5 text-[10.5px] leading-relaxed text-[#ffb3c0]">
+                      Every statement must be accepted to use the simulation. Change your answer, or leave and come back later.
+                    </div>
+                  )}
+
+                  <div className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-4">
+                    <label htmlFor="sign-yes" className="text-[11px] font-semibold">
+                      Type{" "}
+                      <span className="rounded bg-[rgba(47,227,160,.14)] px-1.5 py-0.5 font-mono text-[#8df5d0]">YES</span>{" "}
+                      to sign
+                    </label>
+                    <input
+                      id="sign-yes"
+                      value={confirmText}
+                      onChange={(e) => setConfirmText(e.target.value)}
+                      placeholder="YES"
+                      autoComplete="off"
+                      spellCheck={false}
+                      disabled={busy}
+                      className={cn("input mt-2 font-mono tracking-[0.2em]", signed && "border-[rgba(47,227,160,.5)]")}
+                    />
+                    <p className="mt-1.5 text-[9.5px] leading-relaxed text-muted/70">
+                      Your confirmation, the four answers and a timestamp are stored with your account as a consent record.
+                    </p>
+                  </div>
 
                   <p className="pt-1 text-center text-[9.5px] leading-relaxed text-muted/60">
                     Full detail:{" "}
@@ -690,13 +835,18 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                     <Link href="/legal#risk-disclosure" className="text-[#8df5d0] underline-offset-2 hover:underline">risk disclosure</Link>.
                   </p>
 
-                  <button onClick={acceptTerms} disabled={!allTerms || busy} className="btn btn-primary mt-2 w-full">
-                    {busy ? "Saving…" : "Accept and enter the matrix"} {!busy && <ArrowRight size={14} />}
+                  <button onClick={acceptTerms} disabled={!signed || busy} className="btn btn-primary w-full">
+                    {busy ? <><Loader2 size={14} className="animate-spin" /> Recording…</> : <>Sign and enter the matrix <ArrowRight size={14} /></>}
                   </button>
+                  {!signed && (
+                    <p className="text-center text-[9.5px] text-muted/60">
+                      Answer all four statements with Yes and type YES to enable signing.
+                    </p>
+                  )}
                 </div>
               )}
 
-              {step === 3 && (
+              {step === 4 && (
                 <div className="animate-fade-in">
                   <div className="relative overflow-hidden rounded-2xl border border-[rgba(47,227,160,.22)] bg-[rgba(47,227,160,.05)] p-8 text-center">
                     <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(60% 100% at 50% 0%, rgba(47,227,160,.18), transparent 70%)" }} />
@@ -719,7 +869,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
               )}
             </div>
 
-            {step < 3 && (
+            {step < 4 && (
               <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-3 sm:px-5">
                 <button
                   onClick={() => setStep((s) => Math.max(0, s - 1))}
@@ -729,11 +879,11 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                   <ChevronLeft size={13} /> Back
                 </button>
                 <button
-                  onClick={() => setStep((s) => Math.min(3, s + 1))}
+                  onClick={() => setStep((s) => Math.min(4, s + 1))}
                   disabled={!canContinue}
-                  className={cn("btn btn-primary btn-sm", step === 2 && "invisible")}
+                  className={cn("btn btn-primary btn-sm", step === 3 && "invisible")}
                 >
-                  Continue <ArrowRight size={13} />
+                  {step === 0 ? "Start verification" : "Continue"} <ArrowRight size={13} />
                 </button>
               </div>
             )}

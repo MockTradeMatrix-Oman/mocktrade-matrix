@@ -1,21 +1,36 @@
+/**
+ * Brand mark: an ascending market line that doubles as a letter M.
+ *
+ * Drawn on a 40×40 grid with round caps so it stays legible down to 24 px.
+ * The right peak sits higher and carries a node — growth, and a data point.
+ */
 export function Logo({ size = 34 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" fill="none" aria-hidden>
       <defs>
-        <linearGradient id="mtm-logo" x1="4" y1="2" x2="36" y2="38" gradientUnits="userSpaceOnUse">
+        <linearGradient id="mtm-logo" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
           <stop stopColor="#4cf0b4" />
-          <stop offset="1" stopColor="#14a874" />
-        </linearGradient>
-        <linearGradient id="mtm-logo-line" x1="8" y1="28" x2="32" y2="12" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#04140d" />
-          <stop offset="1" stopColor="#0a3527" />
+          <stop offset="1" stopColor="#0e9668" />
         </linearGradient>
       </defs>
-      <rect x="1" y="1" width="38" height="38" rx="11" fill="url(#mtm-logo)" />
-      <rect x="1" y="1" width="38" height="38" rx="11" stroke="rgba(255,255,255,.25)" strokeWidth="1" />
-      <path d="M9 26.5L15.5 20L20.5 24L30 12.5" stroke="url(#mtm-logo-line)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="30" cy="12.5" r="2.4" fill="#04140d" />
-      <path d="M9 31.5H31" stroke="#04140d" strokeOpacity=".28" strokeWidth="1.6" strokeLinecap="round" />
+      <rect width="40" height="40" rx="12" fill="url(#mtm-logo)" />
+      <rect
+        x="0.6"
+        y="0.6"
+        width="38.8"
+        height="38.8"
+        rx="11.4"
+        stroke="rgba(255,255,255,.28)"
+        strokeWidth="1.2"
+      />
+      <path
+        d="M9 29.5V15L20 23.5L31 11.5V29.5"
+        stroke="#04140d"
+        strokeWidth="3.1"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx="31" cy="11.5" r="2.3" fill="#04140d" />
     </svg>
   );
 }

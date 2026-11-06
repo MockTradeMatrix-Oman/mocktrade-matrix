@@ -1,4 +1,5 @@
-import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import { isOnboarded, requireUser } from "@/lib/auth";
 import { getAssets, getNotifications, getPredictionStats, getUnreadCount } from "@/lib/data";
 import { SocketProvider } from "@/components/socket";
 import { ToastProvider } from "@/components/toast";
@@ -9,6 +10,10 @@ export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  // The rest of the app stays locked until identity, guardian (when under 18)
+  // and every agreement are complete. Admins are exempt so the console is
+  // always reachable.
+  if (user.role !== "admin" && !isOnboarded(user)) redirect("/verify");
   const notifications = getNotifications(user.id, 10);
   const unread = getUnreadCount(user.id);
   const assets = getAssets().map((a) => ({
