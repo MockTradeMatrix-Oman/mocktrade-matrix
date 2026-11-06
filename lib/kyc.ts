@@ -137,13 +137,20 @@ export function verifyDocumentText(opts: {
   const letters = (flat.match(/[A-Z]/g) ?? []).length;
   const reasons: string[] = [];
 
+  // Image quality is recorded for diagnostics but is deliberately NOT a gate.
+  // A blurry photo that still yields the name, address and document number
+  // passes; only the fields themselves decide.
   const readable = confidence >= 55 && flat.trim().length >= 40 && letters >= 20;
-  if (!readable) {
-    reasons.push(
-      confidence < 55
-        ? "The image is too blurry to read. Use a bright, flat photo with the whole card in frame."
-        : "Almost no text was found. Make sure the document fills the frame and is well lit."
-    );
+
+  if (letters < 5 && flat.trim().length < 20) {
+    return {
+      ok: false,
+      checks: { readable, name: false, address: false, number: false },
+      reasons: ["No text could be read at all. Use a brighter, flatter photo with the whole document in frame."],
+      extractedName: null,
+      extractedAddress: null,
+      confidence: Math.round(confidence),
+    };
   }
 
   const extractedName = extractName(text);
@@ -153,7 +160,7 @@ export function verifyDocumentText(opts: {
     accountTokens.length > 0 && accountTokens.every((t) => documentTokens.has(t));
   const nameHasFullName = extractedName ? words(extractedName).length >= 2 : false;
   const name = Boolean(extractedName) && nameHasFullName && nameMatchesAccount;
-  if (readable && !name) {
+  if (!name) {
     if (!extractedName) reasons.push("No name line was found on the document.");
     else if (!nameHasFullName) reasons.push("The name on the document looks incomplete — the full name must be printed.");
     else reasons.push(`The document does not show the account name “${accountName}”. Use a document issued in that name.`);
@@ -165,20 +172,20 @@ export function verifyDocumentText(opts: {
     extractedAddress.length >= 14 &&
     hasStreetWord(extractedAddress) &&
     hasPostalCode(extractedAddress);
-  if (readable && !address) {
+  if (!address) {
     if (!extractedAddress) reasons.push("No address was found. The document must show your full address.");
     else if (!hasStreetWord(extractedAddress)) reasons.push("The address is missing a street, locality or district line.");
     else reasons.push("The address is missing a PIN / ZIP code.");
   }
 
   const number = NUMBER_PATTERNS[docType].re.test(flat);
-  if (readable && !number) {
+  if (!number) {
     reasons.push(`Could not find the ${NUMBER_PATTERNS[docType].label} for the selected document type.`);
   }
 
   const checks: KycChecks = { readable, name, address, number };
   return {
-    ok: checks.readable && checks.name && checks.address && checks.number,
+    ok: checks.name && checks.address && checks.number,
     checks,
     reasons,
     extractedName: extractedName ? titleCase(extractedName) : null,

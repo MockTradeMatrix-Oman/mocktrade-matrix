@@ -55,7 +55,6 @@ type DocResult = {
 };
 
 const CHECK_LABELS: Array<{ key: CheckKey; label: string }> = [
-  { key: "readable", label: "Image is sharp and readable" },
   { key: "name", label: "Name matches your account" },
   { key: "address", label: "Full address with PIN / ZIP" },
   { key: "number", label: "Document number detected" },
@@ -571,7 +570,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                       </div>
 
                       <div className="mt-4 rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
-                        <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted">What the check looks for</div>
+                        <div className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-muted">What must match</div>
                         <div className="mt-2 grid gap-1.5 sm:grid-cols-2">
                           {CHECK_LABELS.map((c) => {
                             const state = result?.checks?.[c.key];
@@ -589,6 +588,9 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                             );
                           })}
                         </div>
+                        <p className="mt-2 text-[9.5px] leading-relaxed text-muted/60">
+                          Image sharpness is not scored. Only the three fields above decide the outcome.
+                        </p>
                       </div>
 
                       {scanning && (

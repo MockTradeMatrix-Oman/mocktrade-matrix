@@ -11,7 +11,8 @@
     "build": "next build",
     "start": "cross-env NODE_ENV=production node server.mjs",
     "db:reset": "node scripts/reset-db.mjs",
-    "test:backup": "node scripts/backup-selftest.mjs"
+    "test:backup": "node scripts/backup-selftest.mjs",
+    "test:kyc": "node scripts/kyc-selftest.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
