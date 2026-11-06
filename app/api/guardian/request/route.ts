@@ -1,24 +1,22 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { randomBytes } from "node:crypto";
-import { one, run, now } from "@/lib/db";
+import { one } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
+import { mailConfigured, sendGuardianEmail } from "@/lib/mail";
+import {
+  absoluteFromRequest,
+  ageFromDob,
+  createOrRefreshGuardianRequest,
+  guardianPath,
+  type GuardianRow,
+} from "@/lib/guardian";
 
 const schema = z.object({
   guardianEmail: z.string().email("Enter a valid guardian email."),
 });
 
-type GuardianRow = {
-  id: number;
-  token: string;
-  guardian_email: string;
-  status: string;
-  created_at: number;
-};
-
-function linkFor(token: string) {
-  return `/guardian/${token}`;
-}
+// One email per account per minute; re-clicking "Resend" must not spam a parent.
+const lastSent = ((globalThis as any).__mtm_guardian_mail ??= new Map<number, number>()) as Map<number, number>;
 
 export async function GET() {
   const user = await getSessionUser();
@@ -33,7 +31,7 @@ export async function GET() {
     ok: true,
     guardianStatus: user.guardian_status,
     request: request
-      ? { ...request, url: linkFor(request.token) }
+      ? { ...request, url: guardianPath(request.token) }
       : null,
   });
 }
@@ -47,29 +45,46 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Enter a valid guardian email." }, { status: 400 });
   }
   const guardianEmail = parsed.data.guardianEmail.toLowerCase();
-
-  const pending = one<GuardianRow>(
-    "SELECT id, token, guardian_email, status, created_at FROM guardian_requests WHERE user_id = ? AND status = 'pending' ORDER BY id DESC LIMIT 1",
-    user.id
-  );
-
-  let token = pending?.token;
-  if (pending) {
-    run("UPDATE guardian_requests SET guardian_email = ? WHERE id = ?", guardianEmail, pending.id);
-  } else {
-    token = randomBytes(18).toString("base64url");
-    run(
-      "INSERT INTO guardian_requests (token,user_id,guardian_email,status,created_at) VALUES (?,?,?,'pending',?)",
-      token, user.id, guardianEmail, now()
-    );
+  if (guardianEmail === user.email.toLowerCase()) {
+    return NextResponse.json({ error: "Use your parent or guardian's email, not your own." }, { status: 400 });
   }
 
-  run("UPDATE users SET guardian_email = ?, guardian_status = 'pending' WHERE id = ?", guardianEmail, user.id);
+  const token = createOrRefreshGuardianRequest(user.id, guardianEmail);
+
+  // Send the real consent email. A mail failure never blocks creating the
+  // request — the link is still returned so it can be copied by hand.
+  const path = guardianPath(token);
+  const since = Date.now() - (lastSent.get(user.id) ?? 0);
+  let emailSent = false;
+  let emailError: string | undefined;
+  let throttled = false;
+
+  if (since < 60_000) {
+    throttled = true;
+    emailError = "An email was sent less than a minute ago. Use the link below or try again shortly.";
+  } else if (!mailConfigured()) {
+    emailError = "Email sending is not configured on this server. Copy the link below instead.";
+  } else {
+    const result = await sendGuardianEmail({
+      to: guardianEmail,
+      studentName: user.name,
+      studentEmail: user.email,
+      age: ageFromDob(user.dob),
+      region: user.region,
+      approveUrl: absoluteFromRequest(req, path),
+    });
+    emailSent = result.sent;
+    emailError = result.error;
+    if (result.sent) lastSent.set(user.id, Date.now());
+  }
 
   return NextResponse.json({
     ok: true,
     token,
-    url: linkFor(token!),
+    url: path,
     guardianEmail,
+    emailSent,
+    throttled,
+    emailError,
   });
 }

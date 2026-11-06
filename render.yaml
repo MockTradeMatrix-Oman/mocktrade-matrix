@@ -22,3 +22,14 @@ services:
         sync: false
       - key: BACKUP_INTERVAL_MS
         value: "300000"
+      # Guardian consent email. Render free blocks SMTP ports, so set a Brevo
+      # API key (HTTPS, 300/day free). APP_URL makes the emailed link point at
+      # the public site.
+      - key: APP_URL
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: MAIL_FROM
+        value: "MockTrade Matrix <mocktradematrix@gmail.com>"
+      - key: MAIL_REPLY_TO
+        value: mocktradematrix@gmail.com

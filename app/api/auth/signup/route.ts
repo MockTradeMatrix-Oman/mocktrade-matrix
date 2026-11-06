@@ -3,6 +3,8 @@ import { z } from "zod";
 import { all, one, run, now, tx, type User } from "@/lib/db";
 import { hashPassword, setSession } from "@/lib/auth";
 import { initials } from "@/lib/finance";
+import { mailConfigured, sendGuardianEmail } from "@/lib/mail";
+import { absoluteFromRequest, ageFromDob, createOrRefreshGuardianRequest, guardianPath } from "@/lib/guardian";
 
 const schema = z.object({
   name: z.string().min(2).max(60),
@@ -61,6 +63,29 @@ export async function POST(req: Request) {
     return id;
   });
 
+  // Under-18 accounts trigger a real consent email to the guardian immediately,
+  // so the parent does not have to wait for the student to reach the wizard.
+  let guardianEmailSent = false;
+  if (minor && guardianEmail) {
+    try {
+      const token = createOrRefreshGuardianRequest(uid, guardianEmail);
+      if (mailConfigured()) {
+        const sent = await sendGuardianEmail({
+          to: guardianEmail,
+          studentName: name,
+          studentEmail: email.toLowerCase(),
+          age: ageFromDob(dob || null),
+          region,
+          approveUrl: absoluteFromRequest(req, guardianPath(token)),
+        });
+        guardianEmailSent = sent.sent;
+      }
+    } catch {
+      // Signing up must never fail because mail is down; the verify wizard
+      // offers a resend and a copyable link.
+    }
+  }
+
   await setSession(uid);
-  return NextResponse.json({ ok: true, redirect: "/dashboard" });
+  return NextResponse.json({ ok: true, redirect: "/dashboard", guardianEmailSent });
 }

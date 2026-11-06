@@ -5,6 +5,8 @@ import { all, one, run, now, tx, ADMIN_EMAIL, type User } from "@/lib/db";
 import { hashPassword, setSession } from "@/lib/auth";
 import { initials, MODES } from "@/lib/finance";
 import crypto from "node:crypto";
+import { mailConfigured, sendGuardianEmail } from "@/lib/mail";
+import { absoluteFromRequest, createOrRefreshGuardianRequest, guardianPath } from "@/lib/guardian";
 
 export const runtime = "nodejs";
 
@@ -150,6 +152,27 @@ export async function POST(req: Request) {
     return id;
   });
 
+  // Under-18 accounts trigger a real consent email to the guardian immediately.
+  let guardianEmailSent = false;
+  if (minor && guardianEmail) {
+    try {
+      const token = createOrRefreshGuardianRequest(uid, guardianEmail);
+      if (mailConfigured()) {
+        const sent = await sendGuardianEmail({
+          to: guardianEmail,
+          studentName: name,
+          studentEmail: email,
+          age: ageFrom(dob),
+          region,
+          approveUrl: absoluteFromRequest(req, guardianPath(token)),
+        });
+        guardianEmailSent = sent.sent;
+      }
+    } catch {
+      // Never fail account creation because mail is unavailable.
+    }
+  }
+
   await setSession(uid);
-  return NextResponse.json({ ok: true, redirect: "/dashboard", name, created: true });
+  return NextResponse.json({ ok: true, redirect: "/dashboard", name, created: true, guardianEmailSent });
 }

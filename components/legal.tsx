@@ -305,11 +305,11 @@ export function Legal() {
               <Bullets
                 items={[
                   <><strong className="text-ink">Who counts as a minor.</strong> Anyone under 18 on the date of sign-up, based on the date of birth provided.</>,
-                  <><strong className="text-ink">What we require.</strong> A guardian email at sign-up and a unique, shareable consent link. The guardian sees the learner&apos;s name, learner mode, region and request date, and can approve or decline.</>,
+                  <><strong className="text-ink">What we require.</strong> A guardian email at sign-up and a unique consent link emailed to that address. The guardian sees the learner&apos;s name, learner mode, region and request date, and can approve or decline.</>,
                   <><strong className="text-ink">What the guardian approves.</strong> Use of an educational simulation with virtual money only, and processing of the learner&apos;s account and verification data as described in the privacy notice.</>,
                   <><strong className="text-ink">When consent is needed.</strong> Identity verification and guardian approval are required before simulated capital is committed — that is, before trading and before buying capital packs or powerups.</>,
                   <><strong className="text-ink">Withdrawal.</strong> A guardian can revoke consent at any time. Trading and shop purchases pause immediately; learning and reading remain available where possible.</>,
-                  <><strong className="text-ink">Re-approval.</strong> The learner can send a fresh request link if consent was declined or withdrawn.</>,
+                  <><strong className="text-ink">Re-approval.</strong> The learner can resend the consent email if it was missed, declined or withdrawn.</>,
                   <><strong className="text-ink">Keep the link private.</strong> The guardian link is single-purpose. Do not post it publicly or forward it to people who are not the learner&apos;s guardian.</>,
                 ]}
               />

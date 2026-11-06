@@ -23,6 +23,16 @@ Because of the above, **Netlify is not supported as-is**, and a serverless/edge 
 | `COOKIE_SECURE` | No | Leave unset on HTTPS. Set to `false` only when testing a production build over `http://localhost`. |
 | `OCR_CACHE_DIR` | Baked into the image | Location of the Tesseract language file. The Docker image sets `/app/ocr-cache`. |
 | `NEXT_PUBLIC_FIREBASE_*` | No | Google sign-in config. The defaults in `lib/firebase.ts` target the existing Firebase project. These values are **inlined at build time**; changing them requires rebuilding, not just restarting. |
+| `APP_URL` | No (recommended) | Public base URL, e.g. `https://mocktrade.onrender.com`. Used for the guardian consent link inside emails. Without it the link is built from the incoming request headers. |
+| `BREVO_API_KEY` | For guardian email | Brevo API key. Sends over HTTPS, so it works on Render's free plan, which blocks SMTP ports. 300 emails/day free, no card. |
+| `RESEND_API_KEY` | Alternative | Resend API key. Also HTTPS, but requires a verified sending domain to email anyone other than the account owner. |
+| `SMTP_HOST` | No (default `smtp.gmail.com`) | SMTP server. Only useful locally or on a paid host — Render free blocks ports 25/465/587. |
+| `SMTP_PORT` | No (default `465`) | `465` uses implicit TLS; `587` uses STARTTLS. |
+| `SMTP_SECURE` | No | Overrides TLS detection. `true` for port 465, `false` for 587. |
+| `SMTP_USER` | For SMTP email | Sending mailbox. For Gmail this is the full address, e.g. `mocktradematrix@gmail.com`. |
+| `SMTP_PASS` | For SMTP email | Gmail **app password** (16 characters, no spaces). Normal passwords are rejected. |
+| `MAIL_FROM` | No | Defaults to `MockTrade Matrix <mocktradematrix@gmail.com>`. Must be allowed by the SMTP provider. |
+| `MAIL_REPLY_TO` | No | Reply address. Defaults to `mocktradematrix@gmail.com`. |
 
 Generate a production secret:
 
@@ -31,6 +41,25 @@ node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"
 ```
 
 Never commit `.env.local`, and never reuse the development secret. Changing `AUTH_SECRET` later is safe for data but signs every user out.
+
+### Guardian consent email (under-18 accounts)
+
+When a learner under 18 signs up, the app creates a private consent link and **emails it to the guardian**. Approval stays server-side: the account is locked until the guardian opens the link and approves.
+
+**On Render's free plan, use Brevo** — Render blocks outbound SMTP ports 25/465/587 on free web services, so Gmail SMTP only works locally or on a paid instance.
+
+1. Create a free Brevo account (300 emails/day, no card).
+2. **Senders & Domains → Senders → Add a sender** and verify `mocktradematrix@gmail.com` with the code Brevo emails you.
+3. **SMTP & API → API Keys → Create a new API key**, then set `BREVO_API_KEY` and `APP_URL` in the Render dashboard.
+4. Restart and trigger a guardian request. If mail is not configured the wizard still shows a copyable link, so verification is never blocked.
+
+Brevo may rewrite a free-provider sender to an `@brevosend.com` address; that is expected without a custom domain. When you own a domain, authenticate it in Brevo (or switch to `RESEND_API_KEY` + `MAIL_FROM`) and the sender becomes fully yours.
+
+For local development, Gmail SMTP is fine:
+
+1. Google Account → **Security** → turn on **2-Step Verification**.
+2. Security → **App passwords** → create one named `MockTrade Matrix`.
+3. Set `SMTP_USER=mocktradematrix@gmail.com`, `SMTP_PASS=<app password>`, `APP_URL=http://localhost:3000`.
 
 ---
 

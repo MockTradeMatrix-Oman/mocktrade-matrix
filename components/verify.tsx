@@ -106,6 +106,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
   const [guardianEmail, setGuardianEmail] = useState(user.guardian_email ?? "");
   const [requestSent, setRequestSent] = useState(false);
   const [requestUrl, setRequestUrl] = useState<string | null>(null);
+  const [emailState, setEmailState] = useState<{ sent: boolean; error?: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [guardianApproved, setGuardianApproved] = useState(user.guardian_status === "approved" || user.guardian_status === "not_required");
   const [agreements, setAgreements] = useState<Record<AgreementKey, "yes" | "no" | null>>({
@@ -227,7 +228,16 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
       if (!res.ok) throw new Error(data.error ?? "Could not create the consent request.");
       setRequestSent(true);
       setRequestUrl(data.url);
-      push({ tone: "info", title: "Consent link created", body: `Share it with ${data.guardianEmail}. The link is valid until a decision is made.` });
+      setEmailState({ sent: Boolean(data.emailSent), error: data.emailError });
+      if (data.emailSent) {
+        push({ tone: "success", title: "Consent email sent", body: `We emailed ${data.guardianEmail}. The page advances as soon as they decide.` });
+      } else {
+        push({
+          tone: "info",
+          title: "Consent link ready",
+          body: data.emailError ?? `Email could not be sent. Copy the link below and share it with ${data.guardianEmail}.`,
+        });
+      }
     } catch (err: any) {
       push({ tone: "error", title: "Request failed", body: err.message });
     } finally {
@@ -400,7 +410,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
               <p className="mt-1 max-w-lg text-[12px] leading-relaxed text-muted">
                 {step === 0 && "Four short steps: identity, guardian consent if you are under 18, agreements, then access. Nothing is skipped — the rest of the app stays locked until every step is complete."}
                 {step === 1 && "Upload a real government ID. We read it on this machine, keep only your name and address, and delete the image immediately. If the name and address are not found, access stays locked."}
-                {step === 2 && "Because you are under 18, a guardian must approve simulated trading access before you can place orders."}
+                {step === 2 && "Because you are under 18, a guardian must approve simulated trading access before you can place orders. We email them a private consent link."}
                 {step === 3 && "Read each statement and answer it explicitly. Then type YES to sign. The confirmation is recorded with a timestamp against your account."}
                 {step === 4 && "Your account is verified and your simulation is funded. Time to learn by doing."}
               </p>
@@ -433,7 +443,7 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                     <ol className="mt-2.5 space-y-2">
                       {[
                         "Identity — your document is read on this device, then deleted.",
-                        "Guardian — only if you are under 18. They approve through a private link.",
+                        "Guardian — only if you are under 18. We email them a private approval link.",
                         "Agreements — four statements, each answered explicitly, then you type YES.",
                         "Access — the dashboard, trading and the arena unlock.",
                       ].map((line, i) => (
@@ -664,8 +674,8 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                           <div>
                             <div className="text-[12px] font-semibold">Why a guardian?</div>
                             <p className="mt-1 text-[10.5px] leading-relaxed text-muted">
-                              Learners under 18 can explore markets safely only with adult consent. Your guardian opens a
-                              private link, reviews what the simulation is, and approves — no account required.
+                              Learners under 18 can explore markets safely only with adult consent. We email your guardian a
+                              private link, they review what the simulation is, and approve — no account required.
                             </p>
                           </div>
                         </div>
@@ -683,13 +693,13 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                           disabled={busy}
                         />
                         <p className="mt-1.5 text-[9.5px] leading-relaxed text-muted/70">
-                          We generate a one-time consent link. Share it directly with your guardian — no email is actually sent in this simulation.
+                          We email this address a private one-time consent link. Your guardian does not need an account.
                         </p>
                       </div>
 
                       {!requestUrl ? (
                         <button onClick={sendGuardian} disabled={busy || !guardianEmail.includes("@")} className="btn btn-primary mt-4 w-full">
-                          {busy ? "Creating link…" : declined ? "Send a new consent link" : "Create consent link"} {!busy && <ArrowRight size={14} />}
+                          {busy ? "Sending…" : declined ? "Email a new consent link" : "Email consent link"} {!busy && <ArrowRight size={14} />}
                         </button>
                       ) : (
                         <div className="mt-4 space-y-3">
@@ -698,9 +708,17 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                               <span className="h-1.5 w-1.5 animate-pulse-soft rounded-full bg-[#ffc061]" /> Awaiting guardian approval
                             </div>
                             <p className="mt-1.5 text-[10.5px] leading-relaxed text-muted">
-                              Send the link below to <span className="font-semibold text-ink/90">{guardianEmail}</span>. This page
-                              updates automatically as soon as they decide.
+                              {emailState?.sent ? (
+                                <>Consent email sent to <span className="font-semibold text-ink/90">{guardianEmail}</span>. They can approve or decline from that private link — this page updates automatically.</>
+                              ) : emailState ? (
+                                <>Email not sent. Copy the private link below and share it with <span className="font-semibold text-ink/90">{guardianEmail}</span>.</>
+                              ) : (
+                                <>A consent request is already waiting for <span className="font-semibold text-ink/90">{guardianEmail}</span>. Use the link below, or resend the email.</>
+                              )}
                             </p>
+                            {!emailState?.sent && emailState?.error && (
+                              <p className="mt-1.5 text-[9.5px] leading-relaxed text-[#ffb3c0]">{emailState.error}</p>
+                            )}
                             <div className="mt-3 flex items-center gap-2 rounded-lg border border-white/[0.08] bg-black/30 px-2.5 py-2">
                               <code className="min-w-0 flex-1 truncate text-[10px] text-[#b9c2d2]">{requestUrl}</code>
                               <button onClick={copyLink} className="btn btn-dark btn-sm shrink-0" aria-label="Copy consent link">
@@ -712,12 +730,12 @@ export function VerifyWizard({ user }: { user: VerifyUser }) {
                                 <ExternalLink size={12} /> Open guardian page
                               </a>
                               <button onClick={sendGuardian} disabled={busy} className="btn btn-dark btn-sm">
-                                <RefreshCw size={12} /> {busy ? "Refreshing…" : "Refresh link"}
+                                <RefreshCw size={12} /> {busy ? "Sending…" : "Resend email"}
                               </button>
                             </div>
                           </div>
                           <p className="text-[9.5px] leading-relaxed text-muted/60">
-                            Simulating? Open the guardian page in a new tab and approve there — the wizard advances automatically.
+                            The link is private and stays valid until your guardian decides. You can also open it yourself to preview the consent page.
                           </p>
                         </div>
                       )}

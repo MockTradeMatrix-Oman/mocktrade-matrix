@@ -12,7 +12,8 @@
     "start": "cross-env NODE_ENV=production node server.mjs",
     "db:reset": "node scripts/reset-db.mjs",
     "test:backup": "node scripts/backup-selftest.mjs",
-    "test:kyc": "node scripts/kyc-selftest.mjs"
+    "test:kyc": "node scripts/kyc-selftest.mjs",
+    "test:mail": "node scripts/mail-selftest.mjs"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",
@@ -22,6 +23,7 @@
     "lightweight-charts": "4.2.3",
     "lucide-react": "^0.468.0",
     "next": "^15.5.0",
+    "nodemailer": "^7.0.13",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "socket.io": "^4.8.1",
@@ -33,6 +35,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.0",
     "@types/node": "^24.0.0",
+    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
     "cross-env": "^7.0.3",
