@@ -16,3 +16,6 @@ mocktrade.db-*
 
 .DS_Store
 Thumbs.db
+
+# Scratch files used during translation/deployment work
+.tmp-*

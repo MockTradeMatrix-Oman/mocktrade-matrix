@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { one, run, now, ADMIN_EMAIL, ADMIN_PASSWORD, type User } from "@/lib/db";
+import { one, ADMIN_EMAIL, ADMIN_PASSWORD, type User } from "@/lib/db";
 import { checkPassword, setSession } from "@/lib/auth";
+import { recordDailyLogin } from "@/lib/streak";
 
 const schema = z.object({
   email: z.string().trim().min(3),
@@ -29,11 +30,14 @@ export async function POST(req: Request) {
   const ok = await checkPassword(parsed.data.password, user.password_hash);
   if (!ok) return NextResponse.json({ error: "That password does not match our records." }, { status: 401 });
 
-  run("UPDATE users SET last_seen = ? WHERE id = ?", now(), user.id);
+  const previousStreak = user.streak;
+  const streak = recordDailyLogin(user);
   await setSession(user.id);
   return NextResponse.json({
     ok: true,
     redirect: user.role === "admin" ? "/admin" : "/dashboard",
     name: user.name,
+    streak,
+    streakUp: streak > previousStreak,
   });
 }

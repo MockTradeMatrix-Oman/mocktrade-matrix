@@ -23,6 +23,8 @@ export type User = {
   start_capital: number;
   xp: number;
   streak: number;
+  /** Local calendar day (YYYY-MM-DD in the account timezone) of the last counted login. */
+  last_streak_day: string | null;
   id_verified: number;
   verified_name: string | null;
   verified_address: string | null;
@@ -177,6 +179,7 @@ function migrate(d: DatabaseSync) {
       start_capital REAL NOT NULL DEFAULT 100000,
       xp INTEGER NOT NULL DEFAULT 0,
       streak INTEGER NOT NULL DEFAULT 1,
+      last_streak_day TEXT,
       id_verified INTEGER NOT NULL DEFAULT 0,
       guardian_status TEXT NOT NULL DEFAULT 'pending',
       guardian_email TEXT,
@@ -342,6 +345,17 @@ function migrate(d: DatabaseSync) {
       status TEXT NOT NULL DEFAULT 'pending',
       created_at INTEGER NOT NULL,
       UNIQUE(requester, addressee)
+    );
+
+    -- One-to-one messages between accepted friends. Kept when a friendship is
+    -- removed so a learner never loses a conversation they already had.
+    CREATE TABLE IF NOT EXISTS direct_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sender_id INTEGER NOT NULL,
+      recipient_id INTEGER NOT NULL,
+      body TEXT NOT NULL,
+      read_at INTEGER,
+      created_at INTEGER NOT NULL
     );
 
     CREATE TABLE IF NOT EXISTS challenges (
@@ -530,6 +544,10 @@ function migrate(d: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_id_docs_user ON id_documents(user_id, created_at);
     CREATE INDEX IF NOT EXISTS idx_id_docs_hash ON id_documents(doc_hash, status);
     CREATE INDEX IF NOT EXISTS idx_shop_user ON shop_purchases(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_friends_pair ON friends(requester, addressee);
+    CREATE INDEX IF NOT EXISTS idx_friends_addressee ON friends(addressee, status);
+    CREATE INDEX IF NOT EXISTS idx_dm_thread ON direct_messages(sender_id, recipient_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_dm_unread ON direct_messages(recipient_id, read_at);
     CREATE INDEX IF NOT EXISTS idx_support_user ON support_requests(user_id, status);
     CREATE INDEX IF NOT EXISTS idx_support_status ON support_requests(status, created_at);
     CREATE INDEX IF NOT EXISTS idx_competitions_class ON classroom_competitions(classroom_id, created_at);
@@ -540,6 +558,9 @@ function migrate(d: DatabaseSync) {
   `);
 
   // Lightweight, additive migrations for databases created by earlier builds.
+  // The streak day is tracked separately from last_seen so socket presence
+  // updates cannot swallow a daily login.
+  ensureColumn(d, "users", "last_streak_day", "TEXT");
   ensureColumn(d, "users", "verified_name", "TEXT");
   ensureColumn(d, "users", "verified_address", "TEXT");
   ensureColumn(d, "users", "institution_access", "INTEGER NOT NULL DEFAULT 0");
@@ -865,6 +886,7 @@ function purgeDemoData(d: DatabaseSync) {
   for (const { id } of rows) {
     for (const table of owned) d.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(id);
     d.prepare("DELETE FROM friends WHERE requester = ? OR addressee = ?").run(id, id);
+    d.prepare("DELETE FROM direct_messages WHERE sender_id = ? OR recipient_id = ?").run(id, id);
     d.prepare("DELETE FROM challenges WHERE host_id = ? OR guest_id = ?").run(id, id);
     d.prepare("DELETE FROM classrooms WHERE owner_id = ?").run(id);
     d.prepare("DELETE FROM users WHERE id = ?").run(id);

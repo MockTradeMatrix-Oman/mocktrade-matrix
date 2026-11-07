@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { isOnboarded, requireUser } from "@/lib/auth";
 import { getAssets, getNotifications, getPredictionStats, getUnreadCount } from "@/lib/data";
+import { getFriendBadges } from "@/lib/friends";
 import { SocketProvider } from "@/components/socket";
 import { ToastProvider } from "@/components/toast";
 import { Shell } from "@/components/shell";
@@ -16,6 +17,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (user.role !== "admin" && !isOnboarded(user)) redirect("/verify");
   const notifications = getNotifications(user.id, 10);
   const unread = getUnreadCount(user.id);
+  const friendBadges = getFriendBadges(user.id);
   const assets = getAssets().map((a) => ({
     symbol: a.symbol,
     price: a.price,
@@ -37,6 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           }}
           notifications={notifications}
           unread={unread}
+          friendBadges={friendBadges}
         >
           {children}
         </Shell>

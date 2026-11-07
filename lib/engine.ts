@@ -162,18 +162,74 @@ function tick() {
 const CRASH_MIN_GAP = 2 * DAY;
 const CRASH_MAX_GAP = 14 * DAY;
 
+const CRASH_META_KEY = "crash_schedule";
+
 function nextCrashAt(from: number) {
   return from + CRASH_MIN_GAP + Math.random() * (CRASH_MAX_GAP - CRASH_MIN_GAP);
+}
+
+/* Persist the schedule so restarts and free-tier cold starts resume the same
+   drill instead of silently pushing it out by another 2-14 days. */
+function saveCrashSchedule() {
+  const c = getState().crash;
+  try {
+    run(
+      "INSERT INTO meta (key,value) VALUES (?,?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+      CRASH_META_KEY,
+      JSON.stringify({ phase: c.phase, next: c.next, endsAt: c.endsAt, warned: c.warned })
+    );
+  } catch (e) {
+    console.error("[engine] crash schedule persist", e);
+  }
+}
+
+function restoreCrashSchedule(t: number) {
+  const c = getState().crash;
+  let saved: { phase?: CrashPhase; next?: number; endsAt?: number; warned?: boolean } | null = null;
+  try {
+    const row = one<{ value: string }>("SELECT value FROM meta WHERE key = ?", CRASH_META_KEY);
+    if (row?.value) saved = JSON.parse(row.value);
+  } catch (e) {
+    console.error("[engine] crash schedule restore", e);
+  }
+
+  // Never fire a drill instantly after booting: give live users time to see
+  // the warning. Overdue or near-due drills get a short randomized delay.
+  const soon = () => t + 60_000 + Math.random() * 9 * 60_000;
+
+  if (!saved || typeof saved.next !== "number" || !Number.isFinite(saved.next)) {
+    c.phase = "calm";
+    c.warned = false;
+    c.endsAt = 0;
+    c.next = nextCrashAt(t);
+  } else if (saved.phase === "recovery") {
+    // Finish an interrupted recovery so halved prices climb back to their base.
+    c.phase = "recovery";
+    c.warned = true;
+    c.endsAt = typeof saved.endsAt === "number" && saved.endsAt > t ? saved.endsAt : t + 60_000;
+    c.next = typeof saved.next === "number" && saved.next > c.endsAt ? saved.next : nextCrashAt(c.endsAt);
+  } else {
+    // Calm or warning: re-arm cleanly so the 20-second warning is never skipped.
+    c.phase = "calm";
+    c.warned = false;
+    c.endsAt = 0;
+    c.next = saved.next > t + 20_000 ? saved.next : soon();
+  }
+
+  saveCrashSchedule();
+  return c.next;
 }
 
 function maybeCrash(t: number) {
   const state = getState();
   if (state.crash.phase === "calm" && !state.crash.next) {
     state.crash.next = nextCrashAt(t);
+    saveCrashSchedule();
   }
   if (state.crash.phase === "calm" && t >= state.crash.next - 20_000 && !state.crash.warned) {
     state.crash.warned = true;
     state.crash.phase = "warning";
+    saveCrashSchedule();
     emit("market:warning", { seconds: 20, at: state.crash.next });
     return;
   }
@@ -185,6 +241,7 @@ function maybeCrash(t: number) {
     state.crash.phase = "calm";
     state.crash.warned = false;
     state.crash.next = nextCrashAt(t);
+    saveCrashSchedule();
     emit("market:recovered", { at: t });
   }
 }
@@ -215,6 +272,7 @@ function triggerCrash(t: number) {
     run("INSERT INTO activity (user_id,type,text,created_at) VALUES (?,?,?,?)",
       null, "crash", "Forced market crash drill: a simulated 50% drawdown swept the market", t);
   });
+  saveCrashSchedule();
 
   emit("market:crash", {
     at: t, magnitude: 50, recoversAt: state.crash.endsAt,
@@ -560,7 +618,7 @@ export function startEngine() {
   setInterval(() => { try { ruleLoop(); } catch (e) { console.error("[engine] rules", e); } }, 10_000);
   setInterval(() => { try { challengeLoop(); } catch (e) { console.error("[engine] challenges", e); } }, 2000);
 
-  state.crash.next = nextCrashAt(now());
+  restoreCrashSchedule(now());
   console.log(`[engine] started with ${state.assets.size} instruments`);
   return { started: true, assets: state.assets.size };
 }

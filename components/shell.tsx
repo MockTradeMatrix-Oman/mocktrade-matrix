@@ -33,6 +33,7 @@ const NAV = [
   { href: "/learn", label: "Learning ladder", icon: GraduationCap },
   { href: "/arena", label: "Quiz arena", icon: Swords },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+  { href: "/friends", label: "Friends", icon: Users },
 ];
 
 const TITLES: Record<string, { title: string; crumb: string }> = {
@@ -44,6 +45,7 @@ const TITLES: Record<string, { title: string; crumb: string }> = {
   "/learn": { title: "Learning ladder", crumb: "Curriculum" },
   "/arena": { title: "Quiz arena", crumb: "Live battles" },
   "/leaderboard": { title: "Leaderboard", crumb: "Rankings" },
+  "/friends": { title: "Friends", crumb: "Together" },
   "/institution": { title: "Institution", crumb: "Classrooms" },
   "/settings": { title: "Settings", crumb: "Account" },
   "/admin": { title: "Admin console", crumb: "Studio" },
@@ -81,11 +83,13 @@ export function Shell({
   user,
   notifications,
   unread,
+  friendBadges,
   children,
 }: {
   user: ShellUser;
   notifications: Notification[];
   unread: number;
+  friendBadges: { requests: number; unread: number };
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -95,12 +99,20 @@ export function Shell({
   const [credits, setCredits] = useState(user.credits);
   const [notifs, setNotifs] = useState(notifications);
   const [unreadCount, setUnreadCount] = useState(unread);
+  const [friendBadge, setFriendBadge] = useState(friendBadges.requests + friendBadges.unread);
   const [openBell, setOpenBell] = useState(false);
   const [openUser, setOpenUser] = useState(false);
   const [openMobile, setOpenMobile] = useState(false);
+  const [region, setRegion] = useState(user.region);
+  const [switchingCurrency, setSwitchingCurrency] = useState(false);
   const { socket } = useMarket();
 
   useEffect(() => setOpenMobile(false), [pathname]);
+  useEffect(() => setRegion(user.region), [user.region]);
+  useEffect(
+    () => setFriendBadge(friendBadges.requests + friendBadges.unread),
+    [friendBadges.requests, friendBadges.unread]
+  );
 
   useEffect(() => {
     if (!socket) return;
@@ -122,6 +134,28 @@ export function Shell({
       socket.off("notification", onNotif);
     };
   }, [socket, push, router]);
+
+  // Friend requests and unread chats share one sidebar badge. Re-reading the
+  // overview is cheap and keeps every tab (including a second window) honest.
+  useEffect(() => {
+    if (!socket) return;
+    const refreshFriendBadge = async () => {
+      try {
+        const res = await fetch("/api/friends", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json().catch(() => null);
+        if (!data?.badges) return;
+        setFriendBadge(Number(data.badges.requests ?? 0) + Number(data.badges.unread ?? 0));
+      } catch {
+        /* ignore transient network errors */
+      }
+    };
+    const events = ["friend:update", "friend:request", "friend:accepted", "friend:declined", "dm:message"];
+    events.forEach((event) => socket.on(event, refreshFriendBadge));
+    return () => {
+      events.forEach((event) => socket.off(event, refreshFriendBadge));
+    };
+  }, [socket]);
 
   const tickerItems = useMemo(() => {
     const list = Object.values(prices)
@@ -153,6 +187,66 @@ export function Shell({
     await fetch("/api/notifications", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
   }
 
+  async function switchCurrency(next: "IN" | "US") {
+    if (next === region || switchingCurrency) return;
+    const previous = region;
+    setRegion(next);
+    setSwitchingCurrency(true);
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ region: next }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Could not switch currency.");
+      }
+      push({
+        tone: "success",
+        title: next === "IN" ? "Prices in Indian rupees" : "Prices in US dollars",
+        body: "Balances and every price converted at the fixed FX rate.",
+      });
+      router.refresh();
+    } catch (err: any) {
+      setRegion(previous);
+      push({ tone: "error", title: "Currency switch failed", body: err.message });
+    } finally {
+      setSwitchingCurrency(false);
+    }
+  }
+
+  const currencyToggle = (
+    <div
+      role="group"
+      aria-label="Display currency"
+      className="flex items-center rounded-lg border border-white/[0.07] bg-white/[0.03] p-0.5"
+    >
+      {(["IN", "US"] as const).map((code) => {
+        const active = region === code;
+        return (
+          <button
+            key={code}
+            type="button"
+            onClick={() => switchCurrency(code)}
+            disabled={switchingCurrency}
+            aria-pressed={active}
+            title={code === "IN" ? "Show every price in Indian rupees" : "Show every price in US dollars"}
+            className={cn(
+              "rounded-md px-2 py-1 text-[10px] font-semibold transition",
+              active
+                ? "bg-[rgba(47,227,160,.14)] text-[#8df5d0] shadow-[inset_0_0_0_1px_rgba(47,227,160,.25)]"
+                : "text-muted hover:text-ink",
+              switchingCurrency && "opacity-70"
+            )}
+          >
+            {code === "IN" ? "₹ INR" : "$ USD"}
+          </button>
+        );
+      })}
+    </div>
+  );
+
   const sidebarInner = (
     <div className="flex h-full flex-col">
       <div className="px-5 pb-5 pt-5">
@@ -168,7 +262,13 @@ export function Shell({
               <Link key={item.href} href={item.href} className={cn("nav-link", active && "nav-link-active")}>
                 <item.icon size={17} strokeWidth={1.8} />
                 <span>{item.label}</span>
-                {active && <ChevronRight size={13} className="ml-auto text-[#2fe3a0]/70" />}
+                {item.href === "/friends" && friendBadge > 0 ? (
+                  <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff5d7a] px-1 text-[9px] font-bold text-white">
+                    {friendBadge > 99 ? "99+" : friendBadge}
+                  </span>
+                ) : (
+                  active && <ChevronRight size={13} className="ml-auto text-[#2fe3a0]/70" />
+                )}
               </Link>
             );
           })}
@@ -265,9 +365,7 @@ export function Shell({
                 {connected ? `${Math.max(online, 1)} online` : "Reconnecting"}
               </span>
 
-              <span className="hidden rounded-lg border border-white/[0.07] bg-white/[0.03] px-2.5 py-1.5 text-[10.5px] font-semibold text-muted md:inline-flex">
-                {user.region === "IN" ? "IN · ₹ INR" : "US · $ USD"}
-              </span>
+              <div className="hidden md:block">{currencyToggle}</div>
 
               <span className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,192,97,.22)] bg-[rgba(255,192,97,.08)] px-2.5 py-1.5 text-[11px] font-semibold text-[#ffd08d]">
                 <Zap size={12} /> {credits}
@@ -329,9 +427,13 @@ export function Shell({
                         <div className="mt-0.5 truncate text-[10.5px] text-muted">{user.email}</div>
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           <Badge tone="green">{modeName(user.mode)}</Badge>
-                          <Badge>{user.region === "IN" ? "India" : "United States"}</Badge>
+                          <Badge>{region === "IN" ? "India" : "United States"}</Badge>
                           {user.role === "admin" && <Badge tone="violet">Admin</Badge>}
                         </div>
+                      </div>
+                      <div className="border-b border-white/[0.06] px-4 py-3">
+                        <div className="mb-1.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-muted">Display currency</div>
+                        {currencyToggle}
                       </div>
                       {user.role === "admin" && (
                         <Link href="/admin" className="flex items-center gap-2 px-4 py-2.5 text-[12px] text-muted transition hover:bg-white/[0.04] hover:text-ink">
@@ -361,7 +463,7 @@ export function Shell({
                 {tickerItems.map((t, i) => (
                   <div key={`${t.s}-${i}`} className="flex shrink-0 items-center gap-2 border-r border-white/[0.04] px-3.5 text-[10.5px]">
                     <span className="font-semibold text-[#c9d2e2]">{t.s}</span>
-                    <span className="num text-muted">{fmtMoney(toLocal(t.p, user.region), user.region, true)}</span>
+                    <span className="num text-muted">{fmtMoney(toLocal(t.p, region), region, true)}</span>
                     <span className={cn("num text-[9.5px] font-semibold", t.chg >= 0 ? "text-[#5beeb9]" : "text-[#ff8fa3]")}>
                       {t.chg >= 0 ? "+" : ""}{t.chg.toFixed(2)}%
                     </span>

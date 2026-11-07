@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { all, one, run, now, tx, ADMIN_EMAIL, type User } from "@/lib/db";
 import { hashPassword, setSession } from "@/lib/auth";
+import { recordDailyLogin } from "@/lib/streak";
 import { initials, MODES } from "@/lib/finance";
 import crypto from "node:crypto";
 import { mailConfigured, sendGuardianEmail } from "@/lib/mail";
@@ -98,9 +99,17 @@ export async function POST(req: Request) {
         { status: 403 }
       );
     }
-    run("UPDATE users SET last_seen = ? WHERE id = ?", now(), existing.id);
+    const previousStreak = existing.streak;
+    const streak = recordDailyLogin(existing);
     await setSession(existing.id);
-    return NextResponse.json({ ok: true, redirect: "/dashboard", name: existing.name, created: false });
+    return NextResponse.json({
+      ok: true,
+      redirect: "/dashboard",
+      name: existing.name,
+      created: false,
+      streak,
+      streakUp: streak > previousStreak,
+    });
   }
 
   // Signing in with Google from the login page creates the account on first

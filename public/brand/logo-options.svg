@@ -1,0 +1,114 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="760" viewBox="0 0 1600 760">
+  <defs>
+    <linearGradient id="o1" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4cf0b4"/><stop offset="1" stop-color="#0e9668"/>
+    </linearGradient>
+    <linearGradient id="o1b" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0f1521"/><stop offset="1" stop-color="#0a0e16"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop stop-color="#2fe3a0"/><stop offset="1" stop-color="#4cc9f0"/>
+    </linearGradient>
+    <pattern id="g" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#ffffff" stroke-opacity="0.03"/>
+    </pattern>
+  </defs>
+
+  <rect width="1600" height="760" fill="#06080d"/>
+  <rect width="1600" height="760" fill="url(#g)"/>
+  <text x="80" y="64" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="26" font-weight="650" fill="#eef2f8">Logo directions</text>
+  <text x="80" y="94" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" fill="#8a94a8">Each shown at 180 px and at real header size (44 px)</text>
+  <rect x="80" y="112" width="1440" height="1" fill="#1a2230"/>
+
+  <!-- ================= OPTION 1: ASCENDING M ================= -->
+  <g transform="translate(80 150)">
+    <g transform="translate(0 0) scale(4.5)">
+      <rect width="40" height="40" rx="12" fill="url(#o1)"/>
+      <rect x="0.6" y="0.6" width="38.8" height="38.8" rx="11.4" fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="1.2"/>
+      <path d="M9 29.5V15L20 23.5L31 11.5V29.5" fill="none" stroke="#04140d" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="31" cy="11.5" r="2.3" fill="#04140d"/>
+    </g>
+    <g transform="translate(0 230)">
+      <rect width="40" height="40" rx="12" fill="url(#o1)"/>
+      <rect x="0.6" y="0.6" width="38.8" height="38.8" rx="11.4" fill="none" stroke="#ffffff" stroke-opacity="0.28" stroke-width="1.2"/>
+      <path d="M9 29.5V15L20 23.5L31 11.5V29.5" fill="none" stroke="#04140d" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="31" cy="11.5" r="2.3" fill="#04140d"/>
+    </g>
+    <text x="72" y="258" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="17" font-weight="650" fill="#eef2f8">Ascending M</text>
+    <text x="72" y="284" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">Chart line that reads as M.</text>
+    <text x="72" y="304" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">Bullish, still literal.</text>
+    <text x="0" y="360" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12" letter-spacing="2" fill="#5f6b80">OPTION 1</text>
+  </g>
+
+  <!-- ================= OPTION 2: MONOGRAM IN RING ================= -->
+  <g transform="translate(460 150)">
+    <g transform="translate(0 0) scale(4.5)">
+      <circle cx="20" cy="20" r="19" fill="none" stroke="#2fe3a0" stroke-width="1.3" stroke-opacity="0.55"/>
+      <path d="M12 28.5V13L20 21.5L28 13V28.5" fill="none" stroke="#4cf0b4" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20" cy="34.5" r="1.6" fill="#2fe3a0"/>
+    </g>
+    <g transform="translate(0 230)">
+      <circle cx="20" cy="20" r="19" fill="none" stroke="#2fe3a0" stroke-width="1.8" stroke-opacity="0.55"/>
+      <path d="M12 28.5V13L20 21.5L28 13V28.5" fill="none" stroke="#4cf0b4" stroke-width="3.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="20" cy="34.5" r="2.2" fill="#2fe3a0"/>
+    </g>
+    <text x="72" y="258" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="17" font-weight="650" fill="#eef2f8">Monogram</text>
+    <text x="72" y="284" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">Thin-stroke M in a seal.</text>
+    <text x="72" y="304" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">Quietest, most premium.</text>
+    <text x="0" y="360" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12" letter-spacing="2" fill="#5f6b80">OPTION 2</text>
+  </g>
+
+  <!-- ================= OPTION 3: MATRIX DOTS ================= -->
+  <g transform="translate(840 150)">
+    <g transform="translate(0 0) scale(4.5)">
+      <rect width="40" height="40" rx="12" fill="url(#o1b)"/>
+      <rect x="0.5" y="0.5" width="39" height="39" rx="11.5" fill="none" stroke="#2fe3a0" stroke-opacity="0.35" stroke-width="1"/>
+      <g fill="#2fe3a0">
+        <circle cx="11" cy="11" r="2.5"/><circle cx="11" cy="20" r="2.5"/><circle cx="11" cy="29" r="2.5"/>
+        <circle cx="20" cy="20" r="2.5"/><circle cx="20" cy="11" r="1.6" fill-opacity="0.45"/>
+        <circle cx="29" cy="11" r="2.5"/><circle cx="29" cy="20" r="2.5"/><circle cx="29" cy="29" r="2.5"/>
+      </g>
+      <path d="M11 29L20 20L29 11" stroke="#4cc9f0" stroke-width="1.2" stroke-opacity="0.75" stroke-linecap="round"/>
+    </g>
+    <g transform="translate(0 230)">
+      <rect width="40" height="40" rx="12" fill="url(#o1b)"/>
+      <rect x="0.5" y="0.5" width="39" height="39" rx="11.5" fill="none" stroke="#2fe3a0" stroke-opacity="0.35" stroke-width="1"/>
+      <g fill="#2fe3a0">
+        <circle cx="11" cy="11" r="2.7"/><circle cx="11" cy="20" r="2.7"/><circle cx="11" cy="29" r="2.7"/>
+        <circle cx="20" cy="20" r="2.7"/>
+        <circle cx="29" cy="11" r="2.7"/><circle cx="29" cy="20" r="2.7"/><circle cx="29" cy="29" r="2.7"/>
+      </g>
+      <path d="M11 29L20 20L29 11" stroke="#4cc9f0" stroke-width="1.4" stroke-opacity="0.8" stroke-linecap="round"/>
+    </g>
+    <text x="72" y="258" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="17" font-weight="650" fill="#eef2f8">Matrix</text>
+    <text x="72" y="284" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">Dot grid forming M,</text>
+    <text x="72" y="304" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">with the rising diagonal.</text>
+    <text x="0" y="360" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12" letter-spacing="2" fill="#5f6b80">OPTION 3</text>
+  </g>
+
+  <!-- ================= OPTION 4: APEX ================= -->
+  <g transform="translate(1220 150)">
+    <g transform="translate(0 0) scale(4.5)">
+      <rect width="40" height="40" rx="12" fill="url(#o1b)"/>
+      <rect x="0.5" y="0.5" width="39" height="39" rx="11.5" fill="none" stroke="#ffffff" stroke-opacity="0.12"/>
+      <path d="M10 30V17L20 26L30 8" fill="none" stroke="url(#accent)" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M24.5 8H30V13.5" fill="none" stroke="#4cf0b4" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="10" cy="30" r="2.2" fill="#2fe3a0"/>
+    </g>
+    <g transform="translate(0 230)">
+      <rect width="40" height="40" rx="12" fill="url(#o1b)"/>
+      <rect x="0.5" y="0.5" width="39" height="39" rx="11.5" fill="none" stroke="#ffffff" stroke-opacity="0.12"/>
+      <path d="M10 30V17L20 26L30 8" fill="none" stroke="url(#accent)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M24.5 8H30V13.5" fill="none" stroke="#4cf0b4" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="10" cy="30" r="2.4" fill="#2fe3a0"/>
+    </g>
+    <text x="72" y="258" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="17" font-weight="650" fill="#eef2f8">Apex</text>
+    <text x="72" y="284" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">M turning into an arrow.</text>
+    <text x="72" y="304" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="13.5" fill="#8a94a8">Most energetic.</text>
+    <text x="0" y="360" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="12" letter-spacing="2" fill="#5f6b80">OPTION 4</text>
+  </g>
+
+  <rect x="80" y="560" width="1440" height="1" fill="#1a2230"/>
+  <text x="80" y="600" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" fill="#8a94a8">Every mark is drawn on a 40×40 grid with round caps, so it stays legible from 24 px up.</text>
+  <text x="80" y="626" font-family="Segoe UI, Inter, system-ui, sans-serif" font-size="15" fill="#8a94a8">Pick a number and I will apply it to the app header, favicon and the banner.</text>
+</svg>

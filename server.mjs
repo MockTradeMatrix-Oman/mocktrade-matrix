@@ -113,6 +113,19 @@ httpServer.listen(port, hostname, async () => {
     console.error("  [arena] failed to attach:", err?.message || err);
   }
 
+  // Direct-message typing indicator. Purely a relay: the sender identity comes
+  // from the authenticated socket, never from the client payload, so one
+  // learner cannot impersonate another. Friendship is enforced by the HTTP
+  // route that stores messages.
+  io.on("connection", (socket) => {
+    socket.on("dm:typing", (payload) => {
+      const to = Number(payload?.to);
+      const from = Number(socket.data.userId);
+      if (!Number.isInteger(to) || to <= 0 || !Number.isInteger(from) || to === from) return;
+      io.to(`user:${to}`).emit("dm:typing", { from, typing: Boolean(payload?.typing) });
+    });
+  });
+
   startAutoBackup();
 
   for (let attempt = 1; attempt <= 20; attempt++) {
