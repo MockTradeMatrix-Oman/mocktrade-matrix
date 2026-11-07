@@ -599,7 +599,14 @@ function migrate(d: DatabaseSync) {
 function ensureColumn(d: DatabaseSync, table: string, column: string, ddl: string) {
   const cols = d.prepare(`PRAGMA table_info(${table})`).all() as Array<{ name: string }>;
   if (cols.some((c) => c.name === column)) return false;
-  d.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+  try {
+    d.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${ddl}`);
+  } catch (err) {
+    // Two build workers can pass the PRAGMA check at the same time. The loser
+    // sees "duplicate column name", which means the migration already applied.
+    if (String((err as { message?: string })?.message || "").includes("duplicate column name")) return false;
+    throw err;
+  }
   return true;
 }
 
@@ -969,11 +976,20 @@ function seedModules(d: DatabaseSync) {
 /* ------------------------------------------------------------------ */
 
 function create(): DatabaseSync {
-  // DATA_DIR lets a host put the database somewhere other than the app folder
-  // (see lib/backup.mjs for the ephemeral-disk case).
-  const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
-  fs.mkdirSync(dir, { recursive: true });
-  const d = new DatabaseSync(path.join(dir, "mocktrade.db"));
+  // During `next build` several workers import this module at once. Give each
+  // worker its own in-memory copy of the seeded schema so page-data collection
+  // never races on the production database file.
+  const building = process.env.NEXT_PHASE === "phase-production-build";
+  let d: DatabaseSync;
+  if (building) {
+    d = new DatabaseSync(":memory:");
+  } else {
+    // DATA_DIR lets a host put the database somewhere other than the app folder
+    // (see lib/backup.mjs for the ephemeral-disk case).
+    const dir = process.env.DATA_DIR || path.join(process.cwd(), "data");
+    fs.mkdirSync(dir, { recursive: true });
+    d = new DatabaseSync(path.join(dir, "mocktrade.db"));
+  }
   migrate(d);
   seed(d);
   return d;
