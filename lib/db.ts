@@ -358,6 +358,30 @@ function migrate(d: DatabaseSync) {
       created_at INTEGER NOT NULL
     );
 
+    -- Friendly stakes between accepted friends. A random, measurable quest is
+    -- generated when the invite is sent. Both stakes are taken when the invite
+    -- is accepted; the first learner to hit the target wins the whole pot. If
+    -- nobody finishes before the deadline, both stakes are lost.
+    CREATE TABLE IF NOT EXISTS friend_quests (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      host_id INTEGER NOT NULL,
+      guest_id INTEGER NOT NULL,
+      stake INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'pending',
+      quest_key TEXT NOT NULL,
+      metric TEXT NOT NULL,
+      target INTEGER NOT NULL,
+      host_baseline REAL NOT NULL DEFAULT 0,
+      guest_baseline REAL NOT NULL DEFAULT 0,
+      host_progress REAL NOT NULL DEFAULT 0,
+      guest_progress REAL NOT NULL DEFAULT 0,
+      winner_id INTEGER,
+      created_at INTEGER NOT NULL,
+      accepted_at INTEGER,
+      ends_at INTEGER,
+      ended_at INTEGER
+    );
+
     CREATE TABLE IF NOT EXISTS challenges (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       host_id INTEGER NOT NULL,
@@ -555,6 +579,9 @@ function migrate(d: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_arena_matches_region ON arena_matches(region, started_at DESC);
     CREATE INDEX IF NOT EXISTS idx_arena_answers_match ON arena_answers(match_id);
     CREATE INDEX IF NOT EXISTS idx_powerups_user ON user_powerups(user_id);
+    CREATE INDEX IF NOT EXISTS idx_quests_host ON friend_quests(host_id, status);
+    CREATE INDEX IF NOT EXISTS idx_quests_guest ON friend_quests(guest_id, status);
+    CREATE INDEX IF NOT EXISTS idx_quests_status ON friend_quests(status, ends_at);
   `);
 
   // Lightweight, additive migrations for databases created by earlier builds.

@@ -10,6 +10,7 @@
 import { hi } from "./i18n-hi";
 import { ta } from "./i18n-ta";
 import { ar } from "./i18n-ar";
+import { questHi, questTa, questAr } from "./i18n-quests";
 
 export const LANGUAGES = [
   { code: "en", label: "English", native: "English", dir: "ltr" },
@@ -24,7 +25,11 @@ export type Dict = Record<string, string>;
 export const DEFAULT_LANG: Lang = "en";
 export const LANG_STORAGE_KEY = "mtm_lang";
 
-export const dictionaries: Record<Exclude<Lang, "en">, Dict> = { hi, ta, ar };
+export const dictionaries: Record<Exclude<Lang, "en">, Dict> = {
+  hi: { ...hi, ...questHi },
+  ta: { ...ta, ...questTa },
+  ar: { ...ar, ...questAr },
+};
 
 export function normalizeCopy(value: string): string {
   return value.replace(/\s+/g, " ").trim();

@@ -96,3 +96,58 @@ export type FriendsOverview = {
   outgoing: FriendRequestCard[];
   badges: FriendBadges;
 };
+
+/* ------------------------------------------------------------------ */
+/* friend quests                                                       */
+/* ------------------------------------------------------------------ */
+
+export type QuestMetric = "trades" | "lessons" | "quiz" | "arena_wins" | "xp";
+
+export type QuestStatus =
+  | "pending"
+  | "active"
+  | "won"
+  | "expired"
+  | "declined"
+  | "cancelled";
+
+export type QuestCard = {
+  id: number;
+  role: "host" | "guest";
+  friendId: number;
+  friendName: string;
+  stake: number;
+  /** Winner's payout: both stakes combined. */
+  pot: number;
+  status: QuestStatus;
+  title: string;
+  description: string;
+  metric: QuestMetric;
+  target: number;
+  myProgress: number;
+  friendProgress: number;
+  endsAt: number | null;
+  createdAt: number;
+  acceptedAt: number | null;
+  endedAt: number | null;
+  winnerId: number | null;
+  /** True when the viewer won a finished quest. */
+  iWon: boolean;
+};
+
+export type QuestBadges = {
+  /** Pending invites waiting for the viewer to accept. */
+  invites: number;
+  /** Quests the viewer is currently competing in. */
+  active: number;
+};
+
+export type QuestsOverview = {
+  incoming: QuestCard[];
+  outgoing: QuestCard[];
+  active: QuestCard[];
+  history: QuestCard[];
+  badges: QuestBadges;
+  friends: Array<{ id: number; name: string; credits: number }>;
+  myCredits: number;
+};

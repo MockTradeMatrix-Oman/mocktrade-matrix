@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
-  ArrowLeft, Check, Clock, Flame, Inbox, Loader2, MessageSquare, Search, Send,
-  ShieldCheck, Sparkles, Swords, Target, Trophy, UserCheck, UserPlus, Users, UserX, X, Zap,
+  ArrowLeft, Check, Clock, Coins, Flame, Inbox, Loader2, MessageSquare, Search, Send,
+  ShieldCheck, Sparkles, Swords, Target, Timer, Trophy, UserCheck, UserPlus, Users, UserX, X, Zap,
 } from "lucide-react";
 import { Avatar, Badge, Card, EmptyState, Modal, Progress, cn } from "./ui";
 import { useToast } from "./toast";
 import { useMarket } from "./socket";
+import { useLang } from "./language-provider";
 import { modeName, timeAgo } from "@/lib/finance";
 import type {
   DirectMessage,
@@ -15,13 +16,16 @@ import type {
   FriendRequestCard,
   FriendSearchResult,
   FriendsOverview,
+  QuestCard,
+  QuestsOverview,
 } from "@/lib/friends-types";
 
-type Tab = "friends" | "requests" | "search" | "messages";
+type Tab = "friends" | "requests" | "quests" | "search" | "messages";
 
 const TABS: Array<{ id: Tab; label: string; icon: typeof Users }> = [
   { id: "friends", label: "Friends", icon: Users },
   { id: "requests", label: "Requests", icon: UserPlus },
+  { id: "quests", label: "Quests", icon: Swords },
   { id: "search", label: "Search", icon: Search },
   { id: "messages", label: "Messages", icon: MessageSquare },
 ];
@@ -38,15 +42,22 @@ function platformLabel(region: string) {
 export function FriendsView({
   me,
   initial,
+  initialQuests,
 }: {
   me: { id: number; name: string };
   initial: FriendsOverview;
+  initialQuests: QuestsOverview;
 }) {
   const { socket, connected } = useMarket();
   const { push } = useToast();
+  const { t } = useLang();
 
   const [tab, setTab] = useState<Tab>("friends");
   const [overview, setOverview] = useState<FriendsOverview>(initial);
+  const [quests, setQuests] = useState<QuestsOverview>(initialQuests);
+  const [questFriendId, setQuestFriendId] = useState<number | "">("");
+  const [questStake, setQuestStake] = useState(25);
+  const [questBusy, setQuestBusy] = useState<string | null>(null);
   const [activeFriendId, setActiveFriendId] = useState<number | null>(null);
   const [thread, setThread] = useState<DirectMessage[]>([]);
   const [threadLoading, setThreadLoading] = useState(false);
@@ -91,6 +102,15 @@ export function FriendsView({
     }
   }, []);
 
+  const reloadQuests = useCallback(async () => {
+    try {
+      const res = await fetch("/api/friends/quests", { cache: "no-store" });
+      if (res.ok) setQuests((await res.json()) as QuestsOverview);
+    } catch {
+      /* keep the last snapshot if the network blips */
+    }
+  }, []);
+
   const loadThread = useCallback(async (id: number, silent = false) => {
     if (!silent) setThreadLoading(true);
     try {
@@ -126,6 +146,40 @@ export function FriendsView({
         body: `${d?.by?.name ?? "A learner"} declined your request.`,
       });
       void reload();
+    };
+    const onQuestInvite = (d: any) => {
+      push({
+        tone: "info",
+        title: "New friend quest",
+        body: `${d?.from?.name ?? "A friend"} staked ${d?.stake ?? 0} credits on "${d?.title ?? "a quest"}". Open Quests to accept.`,
+      });
+      void reloadQuests();
+    };
+    const onQuestUpdate = () => {
+      void reloadQuests();
+    };
+    const onQuestEnded = (d: any) => {
+      if (d?.status === "won") {
+        push({
+          tone: d.winnerId === me.id ? "success" : "error",
+          title: d.winnerId === me.id ? "Quest won" : "Quest lost",
+          body:
+            d.winnerId === me.id
+              ? `You completed "${d.title}" first. The whole pot is yours.`
+              : `${d.winnerName} completed "${d.title}" first. Better luck on the next stake.`,
+        });
+      } else if (d?.status === "expired") {
+        push({
+          tone: "info",
+          title: "Quest expired",
+          body: `Neither player finished "${d.title}". Both stakes were lost.`,
+        });
+      } else if (d?.status === "declined") {
+        push({ tone: "info", title: "Quest declined", body: `Your invite for "${d.title}" was declined.` });
+      } else if (d?.status === "cancelled") {
+        push({ tone: "info", title: "Quest withdrawn", body: `The invite for "${d.title}" was cancelled.` });
+      }
+      void reloadQuests();
     };
     const onMessage = (d: any) => {
       const message = d?.message as DirectMessage | undefined;
@@ -164,6 +218,9 @@ export function FriendsView({
     socket.on("friend:request", onRequest);
     socket.on("friend:accepted", onAccepted);
     socket.on("friend:declined", onDeclined);
+    socket.on("quest:invite", onQuestInvite);
+    socket.on("quest:update", onQuestUpdate);
+    socket.on("quest:ended", onQuestEnded);
     socket.on("dm:message", onMessage);
     socket.on("dm:read", onRead);
     socket.on("dm:typing", onTyping);
@@ -173,16 +230,30 @@ export function FriendsView({
       socket.off("friend:request", onRequest);
       socket.off("friend:accepted", onAccepted);
       socket.off("friend:declined", onDeclined);
+      socket.off("quest:invite", onQuestInvite);
+      socket.off("quest:update", onQuestUpdate);
+      socket.off("quest:ended", onQuestEnded);
       socket.off("dm:message", onMessage);
       socket.off("dm:read", onRead);
       socket.off("dm:typing", onTyping);
     };
-  }, [socket, push, reload, loadThread, me.id]);
+  }, [socket, push, reload, reloadQuests, loadThread, me.id]);
 
   // Keep the conversation pinned to the newest message.
   useEffect(() => {
     threadEndRef.current?.scrollIntoView({ block: "end" });
   }, [thread.length, typingFrom, activeFriendId, tab]);
+
+  // Quest progress is driven by real platform activity, so refresh while the
+  // Quests tab is open even if the socket is reconnecting.
+  useEffect(() => {
+    if (tab !== "quests") return;
+    void reloadQuests();
+    const timer = setInterval(() => {
+      void reloadQuests();
+    }, 20_000);
+    return () => clearInterval(timer);
+  }, [tab, reloadQuests]);
 
   // Debounced verified-user search.
   useEffect(() => {
@@ -283,6 +354,72 @@ export function FriendsView({
     }
   }
 
+  async function sendQuest() {
+    if (questBusy) return;
+    if (!questFriendId) {
+      push({ tone: "info", title: "Pick a friend", body: "Choose which friend you want to challenge." });
+      return;
+    }
+    const friend = quests.friends.find((f) => f.id === questFriendId);
+    setQuestBusy("invite");
+    try {
+      await postJson("/api/friends/quests", {
+        action: "invite",
+        userId: questFriendId,
+        stake: questStake,
+      });
+      push({
+        tone: "success",
+        title: "Quest invite sent",
+        body: `${friend?.name ?? "Your friend"} has 24 hours to accept the ${questStake}-credit stake.`,
+      });
+      setQuestFriendId("");
+      await reloadQuests();
+    } catch (err: any) {
+      push({ tone: "error", title: "Quest not sent", body: err.message });
+    } finally {
+      setQuestBusy(null);
+    }
+  }
+
+  async function respondQuestAction(quest: QuestCard, accept: boolean) {
+    if (questBusy) return;
+    setQuestBusy(`${accept ? "accept" : "decline"}:${quest.id}`);
+    try {
+      await postJson("/api/friends/quests", {
+        action: accept ? "accept" : "decline",
+        questId: quest.id,
+      });
+      push({
+        tone: accept ? "success" : "info",
+        title: accept ? "Quest started" : "Quest declined",
+        body: accept
+          ? `Your ${quest.stake}-credit stake is in. "${t(quest.title)}" is live — first to finish wins ${quest.pot}.`
+          : `You declined "${t(quest.title)}". No credits were taken.`,
+      });
+      await reloadQuests();
+      await reload();
+    } catch (err: any) {
+      push({ tone: "error", title: "Quest not updated", body: err.message });
+    } finally {
+      setQuestBusy(null);
+    }
+  }
+
+  async function cancelQuestAction(quest: QuestCard) {
+    if (questBusy) return;
+    setQuestBusy(`cancel:${quest.id}`);
+    try {
+      await postJson("/api/friends/quests", { action: "cancel", questId: quest.id });
+      push({ tone: "info", title: "Invite withdrawn", body: `"${t(quest.title)}" was cancelled. No credits were taken.` });
+      await reloadQuests();
+    } catch (err: any) {
+      push({ tone: "error", title: "Could not cancel", body: err.message });
+    } finally {
+      setQuestBusy(null);
+    }
+  }
+
   function openThread(id: number) {
     setActiveFriendId(id);
     activeRef.current = id;
@@ -355,9 +492,11 @@ export function FriendsView({
 
   const totalUnread = overview.badges.unread;
   const incomingCount = overview.incoming.length;
+  const questCount = quests.badges.invites + quests.badges.active;
   const tabCount: Record<Tab, number> = {
     friends: overview.friends.length,
     requests: incomingCount,
+    quests: questCount,
     search: 0,
     messages: totalUnread,
   };
@@ -372,7 +511,8 @@ export function FriendsView({
           <h1 className="mt-1 text-[24px] font-semibold tracking-tight sm:text-[28px]">Train together, not alone</h1>
           <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-muted">
             Search identity-verified learners, compare levels, streaks and arena ratings, then plan strategies in a
-            private real-time chat. Only accepted friends can message you.
+            private real-time chat. Only accepted friends can message you. Stake credits on measurable friend quests —
+            first to finish takes the pot.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -386,10 +526,11 @@ export function FriendsView({
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:max-w-xl">
+      <div className="grid grid-cols-2 gap-2 sm:max-w-2xl sm:grid-cols-4">
         {[
           { label: "Friends", value: overview.friends.length, icon: <Users size={13} />, tone: "text-[#8df5d0]" },
           { label: "Requests", value: incomingCount, icon: <Inbox size={13} />, tone: "text-[#b3a8ff]" },
+          { label: "Quests", value: questCount, icon: <Swords size={13} />, tone: "text-[#7fdcff]" },
           { label: "Unread", value: totalUnread, icon: <MessageSquare size={13} />, tone: "text-[#ffd08d]" },
         ].map((s) => (
           <div key={s.label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
@@ -543,6 +684,184 @@ export function FriendsView({
                       {busy === `remove:${req.id}` ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />} Cancel
                     </button>
                   </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {tab === "quests" && (
+        <div className="space-y-3">
+          <Card className="overflow-hidden">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] px-4 py-3">
+              <div>
+                <div className="text-[12px] font-semibold">Challenge a friend</div>
+                <div className="mt-0.5 max-w-xl text-[10px] leading-relaxed text-muted">
+                  Pick a friend and a stake. The server rolls a random, measurable quest. First to finish takes both
+                  stakes. If the deadline passes, both stakes are lost.
+                </div>
+              </div>
+              <Badge tone="cyan"><Coins size={10} /> {quests.myCredits.toLocaleString("en-US")} credits</Badge>
+            </div>
+            {quests.friends.length === 0 ? (
+              <EmptyState
+                icon={<Swords size={17} />}
+                title="Add a friend first"
+                body="Friend quests only run between accepted friends. Send a request, then come back to stake credits."
+                action={<button onClick={() => setTab("search")} className="btn btn-primary btn-sm"><Search size={13} /> Find learners</button>}
+              />
+            ) : (
+              <div className="flex flex-wrap items-end gap-3 p-4">
+                <label className="min-w-0">
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">Friend</span>
+                  <select
+                    value={questFriendId}
+                    onChange={(e) => setQuestFriendId(e.target.value ? Number(e.target.value) : "")}
+                    className="input mt-1 block min-w-[210px]"
+                  >
+                    <option value="">Choose a friend</option>
+                    {quests.friends.map((f) => (
+                      <option key={f.id} value={f.id}>
+                        {f.name} · {f.credits.toLocaleString("en-US")} credits
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <div>
+                  <span className="text-[9px] font-semibold uppercase tracking-[0.12em] text-muted">Stake</span>
+                  <div className="mt-1 flex items-center gap-1 rounded-lg border border-white/[0.07] bg-black/20 p-1">
+                    {[10, 25, 50].map((stake) => (
+                      <button
+                        key={stake}
+                        onClick={() => setQuestStake(stake)}
+                        className={cn(
+                          "rounded-md px-3 py-1.5 text-[11px] font-semibold transition",
+                          questStake === stake ? "bg-white/[0.1] text-ink" : "text-muted hover:text-ink"
+                        )}
+                      >
+                        {stake}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <button
+                  onClick={() => void sendQuest()}
+                  disabled={!questFriendId || questBusy === "invite"}
+                  className="btn btn-primary btn-sm"
+                >
+                  {questBusy === "invite" ? <Loader2 size={13} className="animate-spin" /> : <Swords size={13} />} Send quest invite
+                </button>
+                <span className="text-[9.5px] text-muted/60">Winner takes {questStake * 2} credits.</span>
+              </div>
+            )}
+          </Card>
+
+          {quests.incoming.length > 0 && (
+            <Card className="overflow-hidden border-[rgba(127,220,255,.2)]">
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                <div className="text-[12px] font-semibold">Incoming quest invites</div>
+                <Badge tone="cyan">{quests.incoming.length}</Badge>
+              </div>
+              <div className="divide-y divide-white/[0.04]">
+                {quests.incoming.map((quest) => (
+                  <div key={quest.id} className="flex flex-wrap items-start gap-3 px-4 py-3">
+                    <Avatar name={quest.friendName} size={36} />
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[12.5px] font-semibold">
+                        {quest.friendName} challenged you
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-ink/85">{t(quest.title)}</div>
+                      <div className="text-[10px] text-muted">{t(quest.description)}</div>
+                      <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                        <Badge tone="cyan"><Coins size={9} /> {quest.stake} to accept</Badge>
+                        <Badge tone="green"><Trophy size={9} /> Winner takes {quest.pot}</Badge>
+                        <span className="text-[9.5px] text-muted/60">{timeAgo(quest.createdAt)}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        onClick={() => void respondQuestAction(quest, true)}
+                        disabled={Boolean(questBusy)}
+                        className="btn btn-primary btn-sm"
+                      >
+                        {questBusy === `accept:${quest.id}` ? <Loader2 size={12} className="animate-spin" /> : <Check size={12} />} Accept
+                      </button>
+                      <button
+                        onClick={() => void respondQuestAction(quest, false)}
+                        disabled={Boolean(questBusy)}
+                        className="btn btn-ghost btn-sm"
+                      >
+                        <X size={12} /> Decline
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <Card className="overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+              <div className="text-[12px] font-semibold">Active quests</div>
+              <Badge tone="green">{quests.active.length}</Badge>
+            </div>
+            {quests.active.length === 0 ? (
+              <EmptyState
+                icon={<Target size={17} />}
+                title="No live quests"
+                body="Start one above. Progress is measured from real trades, lessons, quizzes, arena wins and XP — never invented."
+              />
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {quests.active.map((quest) => (
+                  <ActiveQuestRow key={quest.id} quest={quest} />
+                ))}
+              </div>
+            )}
+          </Card>
+
+          {quests.outgoing.length > 0 && (
+            <Card className="overflow-hidden">
+              <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+                <div className="text-[12px] font-semibold">Waiting for a friend</div>
+                <Badge tone="amber">{quests.outgoing.length}</Badge>
+              </div>
+              <div className="divide-y divide-white/[0.04]">
+                {quests.outgoing.map((quest) => (
+                  <div key={quest.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
+                    <Avatar name={quest.friendName} size={34} />
+                    <div className="min-w-0 flex-1">
+                      <div className="truncate text-[12px] font-semibold">{t(quest.title)}</div>
+                      <div className="text-[9.5px] text-muted">
+                        Sent to {quest.friendName} · {quest.stake} credits at stake · {timeAgo(quest.createdAt)}
+                      </div>
+                    </div>
+                    <Badge tone="amber"><Clock size={9} /> Pending</Badge>
+                    <button
+                      onClick={() => void cancelQuestAction(quest)}
+                      disabled={Boolean(questBusy)}
+                      className="btn btn-ghost btn-sm"
+                    >
+                      {questBusy === `cancel:${quest.id}` ? <Loader2 size={12} className="animate-spin" /> : <X size={12} />} Cancel
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          )}
+
+          <Card className="overflow-hidden">
+            <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
+              <div className="text-[12px] font-semibold">Quest history</div>
+              <Badge>{quests.history.length}</Badge>
+            </div>
+            {quests.history.length === 0 ? (
+              <EmptyState icon={<Clock size={17} />} title="No finished quests yet" body="Wins, losses, declines and expired stakes all land here." />
+            ) : (
+              <div className="divide-y divide-white/[0.04]">
+                {quests.history.map((quest) => (
+                  <QuestHistoryRow key={quest.id} quest={quest} />
                 ))}
               </div>
             )}
@@ -941,6 +1260,93 @@ function RelationAction({
     <button onClick={onAdd} disabled={busy} className="btn btn-primary btn-sm">
       {busy ? <Loader2 size={12} className="animate-spin" /> : <UserPlus size={12} />} Add friend
     </button>
+  );
+}
+
+function timeLeft(endsAt: number | null) {
+  if (!endsAt) return "No deadline";
+  const ms = endsAt - Date.now();
+  if (ms <= 0) return "Ending now";
+  const mins = Math.floor(ms / 60_000);
+  if (mins < 60) return `${mins}m left`;
+  const hours = Math.floor(mins / 60);
+  return `${hours}h ${mins % 60}m left`;
+}
+
+function ActiveQuestRow({ quest }: { quest: QuestCard }) {
+  const { t } = useLang();
+  const pct = (value: number) => Math.min(100, (value / Math.max(1, quest.target)) * 100);
+  return (
+    <div className="px-4 py-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13px] font-semibold">{t(quest.title)}</span>
+            <Badge tone="green"><Coins size={9} /> {quest.stake} staked</Badge>
+            <Badge tone="cyan"><Trophy size={9} /> Pot {quest.pot}</Badge>
+          </div>
+          <div className="mt-0.5 text-[10.5px] text-muted">{t(quest.description)}</div>
+        </div>
+        <span className="flex items-center gap-1 text-[10px] font-semibold text-[#ffd08d]">
+          <Timer size={11} /> {timeLeft(quest.endsAt)}
+        </span>
+      </div>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div>
+          <div className="mb-1 flex items-center justify-between text-[10px]">
+            <span className="font-semibold text-[#8df5d0]">You</span>
+            <span className="num text-muted">{Math.min(quest.myProgress, quest.target)} / {quest.target}</span>
+          </div>
+          <Progress value={pct(quest.myProgress)} tone="green" />
+        </div>
+        <div>
+          <div className="mb-1 flex items-center justify-between text-[10px]">
+            <span className="truncate font-semibold text-[#b3a8ff]">{quest.friendName}</span>
+            <span className="num text-muted">{Math.min(quest.friendProgress, quest.target)} / {quest.target}</span>
+          </div>
+          <Progress value={pct(quest.friendProgress)} tone="violet" />
+        </div>
+      </div>
+
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-[9.5px] text-muted/60">
+        <span className="flex items-center gap-1"><Swords size={9} /> vs {quest.friendName}</span>
+        <span>·</span>
+        <span>Started {timeAgo(quest.acceptedAt ?? quest.createdAt)}</span>
+        <span>·</span>
+        <span>First to finish takes the whole pot.</span>
+      </div>
+    </div>
+  );
+}
+
+function QuestHistoryRow({ quest }: { quest: QuestCard }) {
+  const { t } = useLang();
+  const won = quest.status === "won" && quest.iWon;
+  const lost = quest.status === "won" && !quest.iWon;
+  const tone = won ? "green" : lost ? "red" : quest.status === "expired" ? "amber" : "neutral";
+  const label = won
+    ? `${t("Won")} +${quest.pot}`
+    : lost
+      ? `${t("Lost")} ${quest.stake}`
+      : quest.status === "expired"
+        ? `${t("Stake lost")} ${quest.stake}`
+        : quest.status === "declined"
+          ? t("Declined")
+          : t("Cancelled");
+
+  return (
+    <div className="flex flex-wrap items-center gap-3 px-4 py-3">
+      <Avatar name={quest.friendName} size={32} />
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-[12px] font-semibold">{t(quest.title)}</div>
+        <div className="text-[9.5px] text-muted">
+          {quest.role === "host" ? "You challenged" : "Challenged by"} {quest.friendName} · {quest.stake} stake
+          {quest.endedAt ? ` · ${timeAgo(quest.endedAt)}` : ""}
+        </div>
+      </div>
+      <Badge tone={tone as "green" | "red" | "amber" | "neutral"}>{tone === "green" ? <Trophy size={9} /> : tone === "red" ? <X size={9} /> : <Clock size={9} />} {label}</Badge>
+    </div>
   );
 }
 

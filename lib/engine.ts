@@ -4,6 +4,7 @@ import { forecast, nextHeadline, sma, rsi } from "./ai";
 import { getPredictionStats, getPortfolio } from "./data";
 import { executeOrder, portfolioValueLocal, creditsForUser, notify } from "./trading";
 import { emit, emitToUser, emitToRoom, getIO } from "./realtime";
+import { sweepQuests } from "./quests";
 
 type Point = { t: number; p: number };
 type CrashPhase = "calm" | "warning" | "recovery";
@@ -617,6 +618,7 @@ export function startEngine() {
   setInterval(() => { try { predictionLoop(); } catch (e) { console.error("[engine] ai", e); } }, 45_000);
   setInterval(() => { try { ruleLoop(); } catch (e) { console.error("[engine] rules", e); } }, 10_000);
   setInterval(() => { try { challengeLoop(); } catch (e) { console.error("[engine] challenges", e); } }, 2000);
+  setInterval(() => { try { sweepQuests(); } catch (e) { console.error("[engine] quests", e); } }, 15_000);
 
   restoreCrashSchedule(now());
   console.log(`[engine] started with ${state.assets.size} instruments`);
