@@ -1,5 +1,5 @@
 import "server-only";
-import { all, one, run, now, type User } from "./db";
+import { all, one, run, now, tx, type User } from "./db";
 import { emitToUser } from "./realtime";
 import { creditsForUser, notify } from "./trading";
 import { areFriends, getFriends } from "./friends";
@@ -200,14 +200,19 @@ function finishQuest(row: QuestRow, winnerId: number, t: number) {
   const loserId = winnerId === row.host_id ? row.guest_id : row.host_id;
   const pot = Number(row.stake) * 2;
 
-  run(
-    "UPDATE friend_quests SET status = 'won', winner_id = ?, host_progress = ?, guest_progress = ?, ended_at = ? WHERE id = ?",
+  // Claim the settlement first: only the sweep that flips `active` → `won`
+  // pays out, so a repeated sweep can never credit the pot twice.
+  const claim = run(
+    `UPDATE friend_quests
+     SET status = 'won', winner_id = ?, host_progress = ?, guest_progress = ?, ended_at = ?
+     WHERE id = ? AND status = 'active'`,
     winnerId,
     row.host_progress,
     row.guest_progress,
     t,
     row.id
   );
+  if (claim.changes !== 1) return;
   row.status = "won";
   row.winner_id = winnerId;
   row.ended_at = t;
@@ -242,7 +247,12 @@ function finishQuest(row: QuestRow, winnerId: number, t: number) {
 
 function expireQuest(row: QuestRow, t: number) {
   const tpl = templateFor(row);
-  run("UPDATE friend_quests SET status = 'expired', ended_at = ? WHERE id = ?", t, row.id);
+  const claim = run(
+    "UPDATE friend_quests SET status = 'expired', ended_at = ? WHERE id = ? AND status = 'active'",
+    t,
+    row.id
+  );
+  if (claim.changes !== 1) return;
   row.status = "expired";
   row.ended_at = t;
 
@@ -268,7 +278,12 @@ function expireQuest(row: QuestRow, t: number) {
 
 function expirePending(row: QuestRow, t: number) {
   const tpl = templateFor(row);
-  run("UPDATE friend_quests SET status = 'expired', ended_at = ? WHERE id = ?", t, row.id);
+  const claim = run(
+    "UPDATE friend_quests SET status = 'expired', ended_at = ? WHERE id = ? AND status = 'pending'",
+    t,
+    row.id
+  );
+  if (claim.changes !== 1) return;
   row.status = "expired";
   row.ended_at = t;
   notify(
@@ -507,11 +522,14 @@ export function cancelQuest(
 
   const t = now();
   const tpl = templateFor(row);
-  run(
-    "UPDATE friend_quests SET status = 'cancelled', ended_at = ? WHERE id = ?",
+  const claim = run(
+    "UPDATE friend_quests SET status = 'cancelled', ended_at = ? WHERE id = ? AND status = 'pending'",
     t,
     row.id
   );
+  if (claim.changes !== 1) {
+    return { ok: false, error: "That quest invite is no longer pending." };
+  }
   row.status = "cancelled";
   row.ended_at = t;
   notify(
@@ -547,11 +565,14 @@ export function respondQuest(
   const tpl = templateFor(row);
 
   if (!accept) {
-    run(
-      "UPDATE friend_quests SET status = 'declined', ended_at = ? WHERE id = ?",
+    const claim = run(
+      "UPDATE friend_quests SET status = 'declined', ended_at = ? WHERE id = ? AND status = 'pending'",
       t,
       row.id
     );
+    if (claim.changes !== 1) {
+      return { ok: false, error: "That quest invite is no longer pending." };
+    }
     row.status = "declined";
     row.ended_at = t;
     notify(
@@ -581,43 +602,52 @@ export function respondQuest(
   );
   const stake = Number(row.stake);
   if (Number(host?.credits ?? 0) < stake) {
-    run(
-      "UPDATE friend_quests SET status = 'cancelled', ended_at = ? WHERE id = ?",
+    const claim = run(
+      "UPDATE friend_quests SET status = 'cancelled', ended_at = ? WHERE id = ? AND status = 'pending'",
       t,
       row.id
     );
-    notify(
-      row.host_id,
-      "warning",
-      "Quest cancelled",
-      `You no longer have ${stake} credits to stake, so "${tpl.title}" was cancelled.`
-    );
-    emitToUser(row.host_id, "quest:update", { at: t });
-    emitToUser(row.guest_id, "quest:update", { at: t });
+    if (claim.changes === 1) {
+      notify(
+        row.host_id,
+        "warning",
+        "Quest cancelled",
+        `You no longer have ${stake} credits to stake, so "${tpl.title}" was cancelled.`
+      );
+      emitToUser(row.host_id, "quest:update", { at: t });
+      emitToUser(row.guest_id, "quest:update", { at: t });
+    }
     return { ok: false, error: "Your friend no longer has enough credits for this stake." };
   }
   if (Number(guest?.credits ?? 0) < stake) {
     return { ok: false, error: `You need ${stake} credits to accept this quest.` };
   }
 
-  creditsForUser(viewer.id, -stake, `Friend quest stake · ${tpl.title}`);
-  creditsForUser(row.host_id, -stake, `Friend quest stake · ${tpl.title}`);
-
   const hostXp = one<{ xp: number }>("SELECT xp FROM users WHERE id = ?", row.host_id);
   const guestXp = one<{ xp: number }>("SELECT xp FROM users WHERE id = ?", row.guest_id);
   const endsAt = t + MIN_QUEST_MS + Math.random() * (MAX_QUEST_MS - MIN_QUEST_MS);
 
-  run(
-    `UPDATE friend_quests
-     SET status = 'active', accepted_at = ?, ends_at = ?,
-         host_baseline = ?, guest_baseline = ?
-     WHERE id = ?`,
-    t,
-    endsAt,
-    Number(hostXp?.xp ?? 0),
-    Number(guestXp?.xp ?? 0),
-    row.id
-  );
+  // Claim the invite and take both stakes in one transaction, so a double
+  // accept can never charge the same quest twice.
+  const started = tx(() => {
+    const claim = run(
+      `UPDATE friend_quests
+       SET status = 'active', accepted_at = ?, ends_at = ?,
+           host_baseline = ?, guest_baseline = ?
+       WHERE id = ? AND status = 'pending'`,
+      t,
+      endsAt,
+      Number(hostXp?.xp ?? 0),
+      Number(guestXp?.xp ?? 0),
+      row.id
+    );
+    if (claim.changes !== 1) return false;
+    creditsForUser(viewer.id, -stake, `Friend quest stake · ${tpl.title}`);
+    creditsForUser(row.host_id, -stake, `Friend quest stake · ${tpl.title}`);
+    return true;
+  });
+  if (!started) return { ok: false, error: "That quest invite is no longer pending." };
+
   row.status = "active";
   row.accepted_at = t;
   row.ends_at = endsAt;
