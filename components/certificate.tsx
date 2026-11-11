@@ -98,12 +98,18 @@ export function CertificateFrame({
         </div>
 
         <div className="mt-9 flex flex-col items-center justify-between gap-7 sm:flex-row sm:items-end">
-          <div className="w-full max-w-[230px] text-center sm:text-left">
+          <div className="w-full max-w-[250px] text-center sm:text-left">
             <div className="border-b border-[#8d7a4c] pb-1 text-[17px] italic text-[#22304c]">
               Pranav Ramsingh
             </div>
             <div className="mt-1.5 text-[8.5px] uppercase tracking-[0.18em] text-[#8a7a58]">
-              Programme lead · MockTradeMatrix
+              Founder &amp; Programme Lead · MockTradeMatrix
+            </div>
+            <div className="mt-4 border-b border-[#8d7a4c] pb-1 text-[17px] italic text-[#22304c]">
+              Madhavan KS
+            </div>
+            <div className="mt-1.5 text-[8.5px] uppercase tracking-[0.18em] text-[#8a7a58]">
+              Founder · MockTradeMatrix
             </div>
           </div>
 

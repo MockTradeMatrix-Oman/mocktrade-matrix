@@ -83,7 +83,7 @@ export function certificateToHtml(certificate: Certificate, origin: string): str
         <span class="chip">Simulation only</span>
       </div>
       <div class="foot">
-        <div class="sig"><div class="line">Pranav Ramsingh</div><div class="label">Programme lead · MockTradeMatrix</div></div>
+        <div class="sig"><div class="line">Pranav Ramsingh</div><div class="label">Founder &amp; Programme Lead · MockTradeMatrix</div><div class="line" style="margin-top:14px">Madhavan KS</div><div class="label">Founder · MockTradeMatrix</div></div>
         <div class="seal"><div class="mark">&#9819;</div><div class="v">Verified</div><div class="v">${new Date(certificate.issued_at).getUTCFullYear()}</div></div>
         <div class="date"><div class="line">${escapeHtml(issued)}</div><div class="label">Date of issue</div></div>
       </div>
