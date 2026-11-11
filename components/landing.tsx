@@ -4,13 +4,17 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight, ArrowUpRight, BadgeCheck, BarChart3, BrainCircuit, Building2, Check,
-  Cpu, GraduationCap, Layers, LineChart, Lock, Menu, Rocket, Shield,
+  Cpu, Crown, GraduationCap, Layers, LineChart, Lock, Mail, Menu, Rocket, Shield,
   ShieldCheck, Sparkles, Target, TrendingDown, TrendingUp, Trophy, Users, Wallet, Workflow, X, Zap,
 } from "lucide-react";
 import { Wordmark } from "./logo";
 import { Sparkline } from "./charts";
 import { Badge, cn } from "./ui";
 import { CLASS_META, MODES, fmtMoney, fmtPct, toLocal } from "@/lib/finance";
+import { institutionEmail } from "@/lib/contact";
+import {
+  FREE_FEATURES, INSTITUTION_FEATURES, PREMIUM_FEATURES, PREMIUM_MONTH_CREDITS, PREMIUM_SHIPPING,
+} from "@/lib/plans-copy";
 
 export type LandingAsset = {
   symbol: string;
@@ -247,7 +251,7 @@ export function Landing({
               ["Universe", "#universe"],
               ["Learner modes", "#modes"],
               ["How it works", "#friction"],
-              ["Pricing", "#pricing"],
+              ["Pricing", "/pricing"],
               ["Developers", "/developers"],
             ].map(([label, href]) => (
               <a key={label} href={href} className="rounded-lg px-3 py-2 text-[12.5px] font-medium text-muted transition hover:bg-white/[0.04] hover:text-ink">{label}</a>
@@ -263,7 +267,7 @@ export function Landing({
         </div>
         {open && (
           <div className="animate-fade-in border-t border-white/[0.06] bg-[#080b12] px-5 py-3 lg:hidden">
-            {[["Universe", "#universe"], ["Learner modes", "#modes"], ["How it works", "#friction"], ["Pricing", "#pricing"], ["Developers", "/developers"]].map(([label, href]) => (
+            {[["Universe", "#universe"], ["Learner modes", "#modes"], ["How it works", "#friction"], ["Pricing", "/pricing"], ["Developers", "/developers"]].map(([label, href]) => (
               <a key={label} href={href} onClick={() => setOpen(false)} className="block rounded-lg px-3 py-2.5 text-[13px] text-muted hover:bg-white/[0.04] hover:text-ink">{label}</a>
             ))}
             <Link href="/login" className="mt-1 block rounded-lg px-3 py-2.5 text-[13px] text-muted hover:bg-white/[0.04] hover:text-ink">Sign in</Link>
@@ -743,61 +747,80 @@ export function Landing({
         <div className="mx-auto max-w-[1180px] px-5 py-20">
           <div className="text-center">
             <div className="eyebrow">Pricing</div>
-            <h2 className="mt-3 text-[30px] font-semibold tracking-[-0.03em] sm:text-[38px]">Free to learn. Priced fairly to run.</h2>
-            <p className="mx-auto mt-3 max-w-lg text-[13px] leading-relaxed text-muted">
-              The simulation itself is free for individual learners. Institutional seats cover classroom tooling,
-              cohort analytics and educator dashboards.
+            <h2 className="mt-3 text-[30px] font-semibold tracking-[-0.03em] sm:text-[38px]">Free to learn. Built to go deeper.</h2>
+            <p className="mx-auto mt-3 max-w-xl text-[13px] leading-relaxed text-muted">
+              Every learner keeps the full simulation on Free. Premium adds the final exam, merit certificate,
+              complete analytics and expert sessions. Institution adds the classroom layer.
             </p>
           </div>
 
           <div className="mt-9 grid gap-4 lg:grid-cols-3">
             <div className="card p-6">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Learner</div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Free</div>
               <div className="mt-3 flex items-end gap-1">
-                <span className="num text-[34px] font-semibold leading-none">Free</span>
+                <span className="num text-[34px] font-semibold leading-none">₹0</span>
+                <span className="mb-1 text-[11px] text-muted">/ $0</span>
               </div>
-              <p className="mt-2 text-[11px] text-muted">For anyone learning the mechanics.</p>
+              <p className="mt-2 text-[11px] text-muted">Everything the app has today. Forever, no card.</p>
               <ul className="mt-5 space-y-2">
-                {["Full 5-asset universe", `All ${modules} learning modules`, "AI forecasts with public accuracy", "Guardian verification flow", "Crash drills & leaderboards"].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-[11px] text-[#b9c2d2]"><Check size={11} className="shrink-0 text-[#5beeb9]" /> {f}</li>
+                {FREE_FEATURES.slice(0, 5).map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-[11px] leading-relaxed text-[#b9c2d2]"><Check size={11} className="mt-0.5 shrink-0 text-[#5beeb9]" /> {f}</li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn btn-ghost mt-6 w-full">Create free account</Link>
+              <Link href="/signup" className="btn btn-ghost mt-6 w-full">Create free account <ArrowRight size={13} /></Link>
             </div>
 
             <div className="card relative overflow-hidden p-6 ring-1 ring-[rgba(47,227,160,.28)]">
               <div className="pointer-events-none absolute -right-14 -top-14 h-40 w-40 rounded-full" style={{ background: "radial-gradient(circle, rgba(47,227,160,.16), transparent 65%)" }} />
-              <div className="flex items-center justify-between">
-                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5beeb9]">Institution</div>
-                <Badge tone="green">Most complete</Badge>
+              <div className="relative">
+                <div className="flex items-center justify-between">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5beeb9]">Premium</div>
+                  <Badge tone="green">Investor beta</Badge>
+                </div>
+                <div className="mt-3 flex items-end gap-1.5">
+                  <span className="num text-[34px] font-semibold leading-none">{PREMIUM_MONTH_CREDITS}</span>
+                  <span className="mb-1 text-[11px] text-muted">credits / month</span>
+                </div>
+                <p className="mt-2 text-[11px] text-muted">30 days. Earned in Learning and the Arena, never bought with money.</p>
+                <ul className="mt-5 space-y-2">
+                  {PREMIUM_FEATURES.slice(1, 5).map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-[11px] leading-relaxed text-[#b9c2d2]"><Check size={11} className="mt-0.5 shrink-0 text-[#5beeb9]" /> {f}</li>
+                  ))}
+                  <li className="flex items-start gap-2 text-[11px] leading-relaxed text-[#b9c2d2]">
+                    <Sparkles size={11} className="mt-0.5 shrink-0 text-[#ffd08d]" />
+                    <span>{PREMIUM_SHIPPING} <span className="ml-1 rounded bg-[rgba(255,192,97,.12)] px-1.5 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-[#ffd08d]">Shipping next</span></span>
+                  </li>
+                </ul>
+                <Link href="/pricing" className="btn btn-primary mt-6 w-full"><Crown size={14} /> Explore Premium</Link>
               </div>
-              <div className="mt-3 flex items-end gap-1.5">
-                <span className="num text-[34px] font-semibold leading-none">₹2,499</span>
-                <span className="mb-1 text-[11px] text-muted">/ seat / mo</span>
-              </div>
-              <p className="mt-2 text-[11px] text-muted">Per seat, billed monthly. No annual commitment.</p>
-              <ul className="mt-5 space-y-2">
-                {["Everything in Learner", "Classrooms & cohort codes", "Educator analytics dashboard", "Team competitions", "Priority support"].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-[11px] text-[#b9c2d2]"><Check size={11} className="shrink-0 text-[#5beeb9]" /> {f}</li>
-                ))}
-              </ul>
-              <Link href="/signup" className="btn btn-primary mt-6 w-full">Start a classroom <ArrowRight size={14} /></Link>
             </div>
 
             <div className="card p-6">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted">Educator</div>
-              <div className="mt-3 flex items-end gap-1">
-                <span className="num text-[34px] font-semibold leading-none">₹599</span>
-                <span className="mb-1 text-[11px] text-muted">/ mo</span>
+              <div className="flex items-center justify-between">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#b3a8ff]">Institution</div>
+                <Badge tone="violet"><Building2 size={9} /> Cohorts</Badge>
               </div>
-              <p className="mt-2 text-[11px] text-muted">For a single teacher running one class.</p>
+              <div className="mt-3 flex items-end gap-1.5">
+                <span className="text-[27px] font-semibold leading-none">Custom quote</span>
+              </div>
+              <p className="mt-2 text-[11px] text-muted">Per cohort. Sized with you, not a checkout.</p>
               <ul className="mt-5 space-y-2">
-                {["Up to 40 students", "Assignment tracking", "Quiz result exports", "Shared leaderboard", "Curriculum alignment notes"].map((f) => (
-                  <li key={f} className="flex items-center gap-2 text-[11px] text-[#b9c2d2]"><Check size={11} className="shrink-0 text-[#5beeb9]" /> {f}</li>
+                {INSTITUTION_FEATURES.slice(1, 4).map((f) => (
+                  <li key={f} className="flex items-start gap-2 text-[11px] leading-relaxed text-[#b9c2d2]"><Check size={11} className="mt-0.5 shrink-0 text-[#b3a8ff]" /> {f}</li>
                 ))}
               </ul>
-              <Link href="/signup" className="btn btn-dark mt-6 w-full">Request access</Link>
+              <a href={institutionEmail("/#pricing")} target="_blank" rel="noopener noreferrer" className="btn btn-dark mt-6 w-full">
+                <Mail size={14} /> Talk to us
+              </a>
             </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-3 text-[10.5px] text-muted">
+            <span className="flex items-center gap-1.5"><ShieldCheck size={11} className="text-[#5beeb9]" /> No card payments processed</span>
+            <span className="text-muted/30">·</span>
+            <span>Credits never convert to cash</span>
+            <span className="text-muted/30">·</span>
+            <Link href="/pricing" className="inline-flex items-center gap-1 font-semibold text-[#8df5d0] hover:underline">Compare all plans <ArrowRight size={11} /></Link>
           </div>
         </div>
       </section>

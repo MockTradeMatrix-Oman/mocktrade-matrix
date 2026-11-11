@@ -9,6 +9,7 @@ import { getSupportRequests } from "@/lib/institution";
 import { timeAgo } from "@/lib/finance";
 import { Badge, Card, SectionHead, Stat } from "@/components/ui";
 import { InstitutionAdmin } from "@/components/institution-admin";
+import { PlansAdmin } from "@/components/plans-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +54,15 @@ export default async function AdminPage() {
     "SELECT id, name, email, institution_granted_at FROM users WHERE institution_access = 1 ORDER BY institution_granted_at DESC"
   );
   const supportRequests = getSupportRequests();
+  const planHolders = all<{
+    id: number; name: string; email: string; plan: string;
+    premium_until: number | null; premium_source: string | null;
+  }>(
+    `SELECT id, name, email, plan, premium_until, premium_source
+       FROM users
+      WHERE plan = 'premium'
+      ORDER BY premium_until DESC`
+  );
 
   const modules = all<AdminModule>(
     `SELECT m.id, m.slug, m.title, m.subtitle, m.level, m.order_index, m.minutes,
@@ -129,6 +139,8 @@ export default async function AdminPage() {
           icon={<ShieldCheck size={14} />}
         />
       </div>
+
+      <PlansAdmin holders={planHolders} />
 
       <InstitutionAdmin granted={institutionUsers} requests={supportRequests} />
 

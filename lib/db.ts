@@ -30,6 +30,11 @@ export type User = {
   verified_address: string | null;
   institution_access: number;
   institution_granted_at: number | null;
+  /** Subscription plan: free or premium. Institution access also includes Premium. */
+  plan: string;
+  plan_since: number | null;
+  premium_until: number | null;
+  premium_source: string | null;
   guardian_status: string;
   guardian_email: string | null;
   terms_accepted: number;
@@ -181,6 +186,10 @@ function migrate(d: DatabaseSync) {
       streak INTEGER NOT NULL DEFAULT 1,
       last_streak_day TEXT,
       id_verified INTEGER NOT NULL DEFAULT 0,
+      plan TEXT NOT NULL DEFAULT 'free',
+      plan_since INTEGER,
+      premium_until INTEGER,
+      premium_source TEXT,
       guardian_status TEXT NOT NULL DEFAULT 'pending',
       guardian_email TEXT,
       terms_accepted INTEGER NOT NULL DEFAULT 0,
@@ -592,6 +601,14 @@ function migrate(d: DatabaseSync) {
   ensureColumn(d, "users", "verified_address", "TEXT");
   ensureColumn(d, "users", "institution_access", "INTEGER NOT NULL DEFAULT 0");
   ensureColumn(d, "users", "institution_granted_at", "INTEGER");
+  // Subscription state. Additive only, so existing databases keep every row.
+  ensureColumn(d, "users", "plan", "TEXT NOT NULL DEFAULT 'free'");
+  ensureColumn(d, "users", "plan_since", "INTEGER");
+  ensureColumn(d, "users", "premium_until", "INTEGER");
+  ensureColumn(d, "users", "premium_source", "TEXT");
+  d.prepare(
+    "CREATE INDEX IF NOT EXISTS idx_users_premium ON users(plan, premium_until)"
+  ).run();
   const addedRole = ensureColumn(d, "users", "role", "TEXT NOT NULL DEFAULT 'user'");
   const addedVideo = ensureColumn(d, "modules", "video_url", "TEXT");
   ensureColumn(d, "modules", "is_published", "INTEGER NOT NULL DEFAULT 1");

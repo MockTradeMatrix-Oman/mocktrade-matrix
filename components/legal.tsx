@@ -6,11 +6,11 @@ import {
 } from "lucide-react";
 import { Wordmark } from "./logo";
 import { Badge } from "./ui";
+import { CONTACT_EMAIL } from "@/lib/contact";
 
-const UPDATED = "3 November 2026";
+const UPDATED = "11 November 2026";
 
 // Opens Gmail's compose window with the public contact address pre-filled.
-const CONTACT_EMAIL = "mocktradematrix@gmail.com";
 const GMAIL_COMPOSE = `https://mail.google.com/mail/?view=cm&fs=1&to=${CONTACT_EMAIL}`;
 
 const TOC: Array<[string, string]> = [
@@ -347,27 +347,46 @@ export function Legal() {
               id="pricing"
               n="05"
               icon={CreditCard}
-              title="Plans & institutional access"
-              lead="Learner access is free. Educator and institution plans are quoted for classroom deployments — and this build does not take card payments."
+              title="Plans & access"
+              lead="Free is the full simulation. Premium adds the final exam, merit certificate, complete analytics and expert sessions. Premium is currently activated with earned credits — not cash."
             >
               <div className="grid gap-2.5 sm:grid-cols-3">
-                <Entry title="Learner">Free. Full simulation, modules, arena and leaderboards.</Entry>
-                <Entry title="Educator — ₹599 / month">Single teacher running one class, with classroom tools.</Entry>
-                <Entry title="Institution — ₹2,499 / seat / month">Billed monthly, no annual commitment, with cohort analytics and priority support.</Entry>
+                <Entry title="Free">Full simulation, all eight modules with credit unlocks, arena, quests and portfolio report.</Entry>
+                <Entry title="Premium — 500 credits / month">Every module unlocked, final exam and Completion Merit Certificate, complete analytics, detailed improvement report and monthly expert session.</Entry>
+                <Entry title="Institution — custom quote">Everything in Premium for the educator account, plus classrooms, cohort codes, educator analytics, team competitions and the support desk.</Entry>
               </div>
               <p>
-                <strong className="text-ink">How access is granted.</strong> The institutional console is enabled
-                per account by the platform administrator, matched to the email on the account. It is not
-                self-service and cannot be unlocked from the client.
+                <strong className="text-ink">How access is granted.</strong> Premium can be activated by the account
+                holder for 500 earned credits, or granted by the platform administrator. Institution access is
+                enabled per account by the administrator. Neither plan can be unlocked by editing the client.
               </p>
               <p>
-                <strong className="text-ink">Payments.</strong> This deployment does not process card payments,
-                subscriptions, invoices or renewals inside the app. If billing is enabled later, prices, taxes,
-                renewal and cancellation terms will be shown before any payment is requested.
+                <strong className="text-ink">Credits, not cash.</strong> This deployment does not process card
+                payments, subscriptions, invoices or renewals. Credits are earned by completing modules and arena
+                battles, cannot be bought with money and cannot be converted to cash. The 500-credit Premium price is
+                a beta access price inside the simulation, not a cash price.
               </p>
               <p>
-                <strong className="text-ink">Refunds.</strong> Because no payment is collected in this build,
-                there is nothing to refund. Any future paid plan will state its refund policy before checkout.
+                <strong className="text-ink">Term and expiry.</strong> A Premium activation lasts 30 days. It does not
+                auto-renew and no payment method is stored. When it expires the account returns to Free; completed
+                modules, scores, unlocked modules, trades and reports are preserved.
+              </p>
+              <p>
+                <strong className="text-ink">Certificates.</strong> The Completion Merit Certificate is issued by
+                MockTradeMatrix after all eight modules are complete and the final assessment is passed. It is a merit
+                award for this curriculum, not a licensed financial qualification and not an accreditation from SEBI,
+                SEC, a university or any regulator.
+              </p>
+              <p>
+                <strong className="text-ink">Expert sessions.</strong> Premium includes an invitation to a monthly
+                group session with a guest practitioner. Sessions are scheduled by the MockTradeMatrix team; the first
+                session is still being scheduled and is labelled Shipping next. Premium does not guarantee a
+                one-to-one meeting.
+              </p>
+              <p>
+                <strong className="text-ink">Refunds.</strong> Because no cash is collected in this build, there is
+                nothing to refund. Credits spent on Premium are not redeemable for money. Any future paid plan will
+                state its prices, taxes, refund, renewal and cancellation terms before checkout.
               </p>
             </Section>
 

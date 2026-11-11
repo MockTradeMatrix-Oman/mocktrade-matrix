@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { isOnboarded, requireUser } from "@/lib/auth";
+import { isPremium, planLabel } from "@/lib/plans";
 import { getAssets, getNotifications, getPredictionStats, getUnreadCount } from "@/lib/data";
 import { getFriendBadges } from "@/lib/friends";
 import { SocketProvider } from "@/components/socket";
@@ -34,6 +35,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           user={{
             id: user.id, name: user.name, email: user.email, avatar: user.avatar, mode: user.mode,
             role: user.role, verified: Boolean(user.id_verified), institutionAccess: Boolean((user as any).institution_access),
+            premium: isPremium(user), planLabel: planLabel(user),
             region: user.region, credits: user.credits, cash: user.cash, xp: user.xp,
             streak: user.streak, accent: user.accent,
           }}

@@ -4,6 +4,7 @@ import { all, one, run, now, tx, type Module } from "@/lib/db";
 import { getSessionUser } from "@/lib/auth";
 import { creditsForUser, notify } from "@/lib/trading";
 import { emitToUser } from "@/lib/realtime";
+import { isPremium } from "@/lib/plans";
 
 const schema = z.object({
   action: z.enum(["quiz", "unlock"]),
@@ -31,6 +32,12 @@ export async function POST(req: Request) {
     if (mod.is_free) {
       run("INSERT INTO module_progress (user_id,module_id,status,score) VALUES (?,?,'unlocked',0) ON CONFLICT(user_id,module_id) DO UPDATE SET status='unlocked'", user.id, mod.id);
       return NextResponse.json({ ok: true, status: "unlocked", credits: user.credits });
+    }
+    // Premium includes every module. The unlock is still recorded so progress,
+    // quizzes and certificates behave exactly like a credit unlock.
+    if (isPremium(user)) {
+      run("INSERT INTO module_progress (user_id,module_id,status,score) VALUES (?,?,'unlocked',0) ON CONFLICT(user_id,module_id) DO UPDATE SET status='unlocked'", user.id, mod.id);
+      return NextResponse.json({ ok: true, status: "unlocked", credits: user.credits, premium: true });
     }
     if (user.credits < mod.unlock_cost) {
       return NextResponse.json({ error: `This module costs ${mod.unlock_cost} credits. You have ${user.credits}.` }, { status: 400 });

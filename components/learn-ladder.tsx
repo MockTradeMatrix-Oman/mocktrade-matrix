@@ -39,11 +39,13 @@ export function LearnLadder({
   credits,
   xp,
   streak,
+  premium,
 }: {
   modules: LearnModule[];
   credits: number;
   xp: number;
   streak: number;
+  premium: boolean;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -78,7 +80,11 @@ export function LearnLadder({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Could not unlock module.");
       if (typeof data.credits === "number") setLocalCredits(data.credits);
-      push({ tone: "success", title: "Module unlocked", body: `${mod.title} is ready for you.` });
+      push({
+        tone: "success",
+        title: "Module unlocked",
+        body: data.premium ? `${mod.title} is included with Premium.` : `${mod.title} is ready for you.`,
+      });
       router.refresh();
     } catch (err: any) {
       push({ tone: "error", title: "Unlock failed", body: err.message });
@@ -95,7 +101,11 @@ export function LearnLadder({
             <h1 className="text-[22px] font-semibold tracking-tight sm:text-[26px]">Learning ladder</h1>
             <Badge tone="green"><GraduationCap size={10} /> {completed.length}/{modules.length} complete</Badge>
           </div>
-          <p className="mt-1 text-[12px] text-muted">Pass a quiz to earn credits. Spend credits to unlock the next rung. Credits are never for sale.</p>
+          <p className="mt-1 text-[12px] text-muted">
+            {premium
+              ? "Premium unlocks every module. Pass a quiz to earn credits. Credits are never for sale."
+              : "Pass a quiz to earn credits. Spend credits to unlock the next rung. Credits are never for sale."}
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="flex items-center gap-1.5 rounded-lg border border-[rgba(255,192,97,.22)] bg-[rgba(255,192,97,.08)] px-2.5 py-1.5 text-[11px] font-semibold text-[#ffd08d]">
@@ -231,16 +241,17 @@ export function LearnLadder({
                           <span className="flex items-center gap-1"><Clock size={9} /> {m.minutes} min</span>
                           <span className="flex items-center gap-1"><BookOpen size={9} /> {m.questions} questions</span>
                           <span className="flex items-center gap-1 text-[#ffd08d]/80"><Zap size={9} /> {m.reward_credits} credits</span>
-                          {locked && m.unlock_cost > 0 && <span className="text-[#b3a8ff]/80">unlock {m.unlock_cost} credits</span>}
+                          {locked && m.unlock_cost > 0 && !premium && <span className="text-[#b3a8ff]/80">unlock {m.unlock_cost} credits</span>}
+                          {locked && premium && m.unlock_cost > 0 && <span className="text-[#5beeb9]/80">included with Premium</span>}
                           {locked && m.unlock_cost === 0 && <span className="text-[#5beeb9]/80">free to open</span>}
                         </div>
                       </div>
 
                       <div className="ml-auto flex items-center gap-2">
-                        {locked && m.unlock_cost > 0 ? (
-                          <button onClick={() => unlock(m)} disabled={busyId === m.id || localCredits < m.unlock_cost}
+                        {locked && (m.unlock_cost > 0 || premium) ? (
+                          <button onClick={() => unlock(m)} disabled={busyId === m.id || (!premium && localCredits < m.unlock_cost)}
                             className="btn btn-dark btn-sm h-8">
-                            {busyId === m.id ? "Unlocking…" : <><Unlock size={12} /> {m.unlock_cost} credits</>}
+                            {busyId === m.id ? "Unlocking…" : premium ? <><Unlock size={12} /> Unlock free</> : <><Unlock size={12} /> {m.unlock_cost} credits</>}
                           </button>
                         ) : (
                           <Link href={`/learn/${m.slug}`} className={cn("btn btn-sm h-8", done ? "btn-dark" : unlocked ? "btn-primary" : "btn-dark")}>

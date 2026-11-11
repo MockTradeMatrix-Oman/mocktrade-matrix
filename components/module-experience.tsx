@@ -91,6 +91,7 @@ export function ModuleExperience({
   credits,
   accuracy,
   totalModules,
+  premium,
 }: {
   module: ModuleData;
   prev: ModuleNeighbour;
@@ -98,6 +99,7 @@ export function ModuleExperience({
   credits: number;
   accuracy: number;
   totalModules: number;
+  premium: boolean;
 }) {
   const router = useRouter();
   const { push } = useToast();
@@ -126,7 +128,11 @@ export function ModuleExperience({
       if (!res.ok) throw new Error(data.error ?? "Could not unlock this module.");
       if (typeof data.credits === "number") setLocalCredits(data.credits);
       setStatus("unlocked");
-      push({ tone: "success", title: "Module unlocked", body: "Read the lesson, then take the quiz." });
+      push({
+        tone: "success",
+        title: "Module unlocked",
+        body: data.premium ? "Included with your Premium plan. Read the lesson, then take the quiz." : "Read the lesson, then take the quiz.",
+      });
       router.refresh();
     } catch (err: any) {
       push({ tone: "error", title: "Unlock failed", body: err.message });
@@ -242,9 +248,11 @@ export function ModuleExperience({
                   </div>
                   <div className="mt-3 text-[16px] font-semibold">This module is locked</div>
                   <p className="mt-1.5 text-[11.5px] leading-relaxed text-muted">
-                    {mod.unlock_cost > 0
-                      ? `Unlock it for ${mod.unlock_cost} credits. You currently hold ${localCredits}. Credits are earned by passing earlier modules — never bought with money.`
-                      : "This module is free to open. Unlock it to start the lesson."}
+                    {premium && mod.unlock_cost > 0
+                      ? "Included with Premium. Unlock this module at no credit cost — credits you earn from quizzes stay in your wallet."
+                      : mod.unlock_cost > 0
+                        ? `Unlock it for ${mod.unlock_cost} credits. You currently hold ${localCredits}. Credits are earned by passing earlier modules — never bought with money.`
+                        : "This module is free to open. Unlock it to start the lesson."}
                   </p>
                   <div className="mt-4 w-full rounded-xl border border-white/[0.06] bg-black/25 p-3 text-left">
                     <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted">
@@ -254,11 +262,17 @@ export function ModuleExperience({
                       {firstBlock.replace(/\*\*/g, "").replace(/•/g, "")}
                     </p>
                   </div>
-                  <button onClick={unlock} disabled={unlocking || localCredits < mod.unlock_cost}
+                  <button onClick={unlock} disabled={unlocking || (!premium && localCredits < mod.unlock_cost)}
                     className="btn btn-primary mt-4 w-full max-w-xs">
-                    {unlocking ? "Unlocking…" : mod.unlock_cost > 0 ? <><Unlock size={14} /> Unlock for {mod.unlock_cost} credits</> : <><Unlock size={14} /> Unlock module</>}
+                    {unlocking
+                      ? "Unlocking…"
+                      : premium && mod.unlock_cost > 0
+                        ? <><Unlock size={14} /> Unlock with Premium</>
+                        : mod.unlock_cost > 0
+                          ? <><Unlock size={14} /> Unlock for {mod.unlock_cost} credits</>
+                          : <><Unlock size={14} /> Unlock module</>}
                   </button>
-                  {localCredits < mod.unlock_cost && (
+                  {!premium && localCredits < mod.unlock_cost && (
                     <div className="mt-2 text-[10px] text-[#ff8fa3]">
                       You need {mod.unlock_cost - localCredits} more credits. Pass an earlier module first.
                     </div>

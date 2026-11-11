@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { getModule, getModules, getPredictionStats } from "@/lib/data";
+import { isPremium } from "@/lib/plans";
 import { ModuleExperience, type ModuleData } from "@/components/module-experience";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +40,7 @@ export default async function LearnModulePage({ params }: { params: Promise<{ sl
       credits={user.credits}
       accuracy={getPredictionStats().accuracy}
       totalModules={getModules(user.id).length}
+      premium={isPremium(user)}
     />
   );
 }

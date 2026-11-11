@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import { getModules } from "@/lib/data";
+import { isPremium } from "@/lib/plans";
 import { LearnLadder, type LearnModule } from "@/components/learn-ladder";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +30,7 @@ export default async function LearnPage() {
       credits={user.credits}
       xp={user.xp}
       streak={user.streak}
+      premium={isPremium(user)}
     />
   );
 }

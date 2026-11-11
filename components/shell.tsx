@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  AlertTriangle, ArrowRight, Bell, Building2, CandlestickChart, CheckCircle2, ChevronRight, GraduationCap,
+  AlertTriangle, ArrowRight, Bell, Building2, CandlestickChart, CheckCircle2, ChevronRight, Crown, GraduationCap,
   Info, LayoutDashboard, LineChart, LogOut, Menu, ScanFace, Settings2, ShieldCheck, ShoppingBag, Sparkles,
   Swords, Trophy, Users, Wallet, X, Zap,
 } from "lucide-react";
@@ -17,6 +17,7 @@ import { fmtMoney, levelFromXp, modeName, timeAgo, toLocal } from "@/lib/finance
 type ShellUser = {
   id: number; name: string; email: string; avatar: string; mode: string; region: string;
   role: string; verified: boolean; institutionAccess: boolean;
+  premium: boolean; planLabel: string;
   credits: number; cash: number; xp: number; streak: number; accent: string;
 };
 
@@ -31,6 +32,7 @@ const NAV = [
   { href: "/portfolio", label: "Portfolio", icon: Wallet },
   { href: "/shop", label: "Capital shop", icon: ShoppingBag },
   { href: "/learn", label: "Learning ladder", icon: GraduationCap },
+  { href: "/pricing", label: "Plans", icon: Crown },
   { href: "/arena", label: "Quiz arena", icon: Swords },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/friends", label: "Friends", icon: Users },
@@ -43,6 +45,7 @@ const TITLES: Record<string, { title: string; crumb: string }> = {
   "/portfolio": { title: "Portfolio", crumb: "Positions" },
   "/shop": { title: "Capital shop", crumb: "Credits" },
   "/learn": { title: "Learning ladder", crumb: "Curriculum" },
+  "/pricing": { title: "Plans", crumb: "Access" },
   "/arena": { title: "Quiz arena", crumb: "Live battles" },
   "/leaderboard": { title: "Leaderboard", crumb: "Rankings" },
   "/friends": { title: "Friends", crumb: "Together" },
@@ -300,6 +303,11 @@ export function Shell({
               <div className="mt-0.5 truncate text-[10px] text-muted">{user.role === "admin" ? "Administrator" : modeName(user.mode)}</div>
             </div>
           </div>
+          {user.premium && (
+            <div className="mt-2 flex items-center gap-1 text-[9.5px] font-semibold text-[#ffd08d]">
+              <Crown size={10} /> {user.planLabel}
+            </div>
+          )}
           <div className="mt-3 flex items-center justify-between text-[10px]">
             <span className="flex items-center gap-1 text-[#ffd08d]"><Zap size={11} /> {credits} credits</span>
             <span className="text-muted">{user.streak}d streak</span>
@@ -429,6 +437,7 @@ export function Shell({
                           <Badge tone="green">{modeName(user.mode)}</Badge>
                           <Badge>{region === "IN" ? "India" : "United States"}</Badge>
                           {user.role === "admin" && <Badge tone="violet">Admin</Badge>}
+                          {user.premium && <Badge tone="amber"><Crown size={9} /> {user.planLabel}</Badge>}
                         </div>
                       </div>
                       <div className="border-b border-white/[0.06] px-4 py-3">
@@ -440,6 +449,9 @@ export function Shell({
                           <ShieldCheck size={14} /> Admin console
                         </Link>
                       )}
+                      <Link href="/pricing" className="flex items-center gap-2 px-4 py-2.5 text-[12px] text-muted transition hover:bg-white/[0.04] hover:text-ink">
+                        <Crown size={14} /> Plans &amp; access
+                      </Link>
                       <Link href="/settings" className="flex items-center gap-2 px-4 py-2.5 text-[12px] text-muted transition hover:bg-white/[0.04] hover:text-ink">
                         <Settings2 size={14} /> Account settings
                       </Link>
