@@ -591,6 +591,37 @@ function migrate(d: DatabaseSync) {
     CREATE INDEX IF NOT EXISTS idx_quests_host ON friend_quests(host_id, status);
     CREATE INDEX IF NOT EXISTS idx_quests_guest ON friend_quests(guest_id, status);
     CREATE INDEX IF NOT EXISTS idx_quests_status ON friend_quests(status, ends_at);
+
+    -- Final assessment attempts and issued certificates. A certificate is a
+    -- learning record only: it is never a licence, credit or financial advice.
+    CREATE TABLE IF NOT EXISTS final_exams (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      question_ids TEXT NOT NULL,
+      score INTEGER NOT NULL DEFAULT 0,
+      total INTEGER NOT NULL DEFAULT 0,
+      passed INTEGER NOT NULL DEFAULT 0,
+      answers TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      started_at INTEGER NOT NULL,
+      submitted_at INTEGER
+    );
+
+    CREATE TABLE IF NOT EXISTS certificates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      serial TEXT NOT NULL UNIQUE,
+      user_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      score INTEGER NOT NULL,
+      modules INTEGER NOT NULL,
+      final_exam_id INTEGER NOT NULL,
+      issued_at INTEGER NOT NULL,
+      revoked INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_final_exams_user ON final_exams(user_id, started_at DESC);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_certificates_user ON certificates(user_id);
+    CREATE INDEX IF NOT EXISTS idx_certificates_serial ON certificates(serial);
   `);
 
   // Lightweight, additive migrations for databases created by earlier builds.

@@ -13,6 +13,7 @@ import { ar } from "./i18n-ar";
 import { questHi, questTa, questAr } from "./i18n-quests";
 import { plansHi, plansTa, plansAr } from "./i18n-plans";
 import { analyticsHi, analyticsTa, analyticsAr } from "./i18n-analytics";
+import { certHi, certTa, certAr } from "./i18n-certificates";
 
 export const LANGUAGES = [
   { code: "en", label: "English", native: "English", dir: "ltr" },
@@ -28,9 +29,9 @@ export const DEFAULT_LANG: Lang = "en";
 export const LANG_STORAGE_KEY = "mtm_lang";
 
 export const dictionaries: Record<Exclude<Lang, "en">, Dict> = {
-  hi: { ...hi, ...questHi, ...plansHi, ...analyticsHi },
-  ta: { ...ta, ...questTa, ...plansTa, ...analyticsTa },
-  ar: { ...ar, ...questAr, ...plansAr, ...analyticsAr },
+  hi: { ...hi, ...questHi, ...plansHi, ...analyticsHi, ...certHi },
+  ta: { ...ta, ...questTa, ...plansTa, ...analyticsTa, ...certTa },
+  ar: { ...ar, ...questAr, ...plansAr, ...analyticsAr, ...certAr },
 };
 
 export function normalizeCopy(value: string): string {
