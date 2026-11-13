@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, ArrowRight, Award, BarChart3, Bell, Building2, CandlestickChart, CheckCircle2, ChevronRight, Crown, GraduationCap,
   Info, LayoutDashboard, LineChart, LogOut, Menu, ScanFace, Settings2, ShieldCheck, ShoppingBag, Sparkles,
-  Swords, Trophy, Users, Wallet, X, Zap,
+  Swords, Trophy, Users, Video, Wallet, X, Zap,
 } from "lucide-react";
 import { Avatar, Badge, cn, Progress } from "./ui";
 import { Wordmark, Logo } from "./logo";
@@ -34,6 +34,7 @@ const NAV = [
   { href: "/learn", label: "Learning ladder", icon: GraduationCap },
   { href: "/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/certificate", label: "Certificate", icon: Award },
+  { href: "/sessions", label: "Expert sessions", icon: Video },
   { href: "/pricing", label: "Plans", icon: Crown },
   { href: "/arena", label: "Quiz arena", icon: Swords },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
@@ -50,6 +51,7 @@ const TITLES: Record<string, { title: string; crumb: string }> = {
   "/analytics": { title: "Analytics", crumb: "Insight" },
   "/certificate": { title: "Certificate", crumb: "Achievement" },
   "/exam": { title: "Final assessment", crumb: "Certificate" },
+  "/sessions": { title: "Expert sessions", crumb: "Premium" },
   "/pricing": { title: "Plans", crumb: "Access" },
   "/arena": { title: "Quiz arena", crumb: "Live battles" },
   "/leaderboard": { title: "Leaderboard", crumb: "Rankings" },

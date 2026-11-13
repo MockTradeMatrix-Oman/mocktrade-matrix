@@ -10,6 +10,8 @@ import { timeAgo } from "@/lib/finance";
 import { Badge, Card, SectionHead, Stat } from "@/components/ui";
 import { InstitutionAdmin } from "@/components/institution-admin";
 import { PlansAdmin } from "@/components/plans-admin";
+import { SessionsAdmin } from "@/components/sessions-admin";
+import { listAllSessions, sessionDateLabel } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +65,16 @@ export default async function AdminPage() {
       WHERE plan = 'premium'
       ORDER BY premium_until DESC`
   );
+  const expertSessions = listAllSessions().map((session) => ({
+    id: session.id,
+    title: session.title,
+    speaker: session.speaker,
+    starts_at: session.starts_at,
+    duration_mins: session.duration_mins,
+    status: session.status,
+    attendees: session.attendees,
+    dateLabel: sessionDateLabel(session.starts_at, session.duration_mins),
+  }));
 
   const modules = all<AdminModule>(
     `SELECT m.id, m.slug, m.title, m.subtitle, m.level, m.order_index, m.minutes,
@@ -141,6 +153,8 @@ export default async function AdminPage() {
       </div>
 
       <PlansAdmin holders={planHolders} />
+
+      <SessionsAdmin sessions={expertSessions} />
 
       <InstitutionAdmin granted={institutionUsers} requests={supportRequests} />
 
