@@ -2,6 +2,7 @@ import { DatabaseSync } from "node:sqlite";
 import path from "node:path";
 import fs from "node:fs";
 import bcrypt from "bcryptjs";
+import { FINAL_EXAM_BANK } from "./exam-bank";
 
 const g = globalThis as any;
 export const now = () => Date.now();
@@ -619,9 +620,50 @@ function migrate(d: DatabaseSync) {
       revoked INTEGER NOT NULL DEFAULT 0
     );
 
+    -- The final assessment draws from its own bank so the short module quizzes
+    -- can keep their original questions and pacing.
+    CREATE TABLE IF NOT EXISTS final_exam_questions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      module_slug TEXT NOT NULL,
+      prompt TEXT NOT NULL,
+      options TEXT NOT NULL,
+      correct INTEGER NOT NULL,
+      explanation TEXT NOT NULL,
+      difficulty TEXT NOT NULL DEFAULT 'moderate'
+    );
+
     CREATE INDEX IF NOT EXISTS idx_final_exams_user ON final_exams(user_id, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_final_exam_questions_module ON final_exam_questions(module_slug);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_final_exam_questions_unique
+      ON final_exam_questions(module_slug, prompt);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_certificates_user ON certificates(user_id);
     CREATE INDEX IF NOT EXISTS idx_certificates_serial ON certificates(serial);
+
+    -- Expert sessions are scheduled by an administrator and announced to
+    -- Premium learners. Nothing here invents a speaker: a session only exists
+    -- once a real title, speaker and date have been entered.
+    CREATE TABLE IF NOT EXISTS expert_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      speaker TEXT NOT NULL,
+      speaker_bio TEXT,
+      starts_at INTEGER NOT NULL,
+      duration_mins INTEGER NOT NULL DEFAULT 60,
+      join_url TEXT,
+      status TEXT NOT NULL DEFAULT 'scheduled',
+      created_by INTEGER NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS expert_session_rsvps (
+      session_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      created_at INTEGER NOT NULL,
+      PRIMARY KEY (session_id, user_id)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_expert_sessions_start ON expert_sessions(status, starts_at);
+    CREATE INDEX IF NOT EXISTS idx_expert_rsvps_user ON expert_session_rsvps(user_id);
   `);
 
   // Lightweight, additive migrations for databases created by earlier builds.
@@ -632,6 +674,10 @@ function migrate(d: DatabaseSync) {
   ensureColumn(d, "users", "verified_address", "TEXT");
   ensureColumn(d, "users", "institution_access", "INTEGER NOT NULL DEFAULT 0");
   ensureColumn(d, "users", "institution_granted_at", "INTEGER");
+  // CBT anti-leave telemetry and the bank an attempt was drawn from. Older
+  // attempts default to the module-quiz bank so they can still be resumed.
+  ensureColumn(d, "final_exams", "violations", "INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(d, "final_exams", "question_source", "TEXT NOT NULL DEFAULT 'quiz'");
   // Subscription state. Additive only, so existing databases keep every row.
   ensureColumn(d, "users", "plan", "TEXT NOT NULL DEFAULT 'free'");
   ensureColumn(d, "users", "plan_since", "INTEGER");
@@ -1045,6 +1091,27 @@ function seedModules(d: DatabaseSync) {
   );
 }
 
+/* The final-assessment bank is idempotent: a unique index on (module, prompt)
+   means a restart cannot duplicate questions, while a brand-new database gets
+   the full catalogue on first boot. */
+function seedFinalExamBank(d: DatabaseSync) {
+  const insert = d.prepare(
+    `INSERT OR IGNORE INTO final_exam_questions
+       (module_slug, prompt, options, correct, explanation, difficulty)
+     VALUES (?,?,?,?,?,?)`
+  );
+  for (const q of FINAL_EXAM_BANK) {
+    insert.run(
+      q.module,
+      q.prompt,
+      JSON.stringify(q.options),
+      q.correct,
+      q.explanation,
+      q.difficulty
+    );
+  }
+}
+
 
 /* ------------------------------------------------------------------ */
 /* connection                                                          */
@@ -1067,6 +1134,7 @@ function create(): DatabaseSync {
   }
   migrate(d);
   seed(d);
+  seedFinalExamBank(d);
   return d;
 }
 

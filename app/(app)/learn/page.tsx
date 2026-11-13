@@ -37,13 +37,13 @@ export default async function LearnPage() {
                   {certificate
                     ? `Your certificate is ready. Certificate ID ${certificate.serial}.`
                     : premium
-                      ? "Every module is complete. Pass the final assessment to earn the Completion Merit Certificate."
+                      ? "Every module is complete. Open the Certificate tab to take the final assessment and earn the Completion Merit Certificate."
                       : "Every module is complete. Premium unlocks the final assessment and the Completion Merit Certificate."}
                 </p>
               </div>
             </div>
             <Link
-              href={certificate ? "/certificate" : premium ? "/exam" : "/pricing"}
+              href={premium ? "/certificate" : "/pricing"}
               className="btn btn-primary btn-sm"
             >
               {certificate ? <Award size={12} /> : premium ? <Award size={12} /> : <Crown size={12} />}

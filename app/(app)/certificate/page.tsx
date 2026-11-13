@@ -94,7 +94,7 @@ export default async function CertificatePage() {
               </Link>
             ) : gate.allComplete ? (
               <Link href="/exam" className="btn btn-primary">
-                <Award size={14} /> Open final assessment <ArrowRight size={13} />
+                <Award size={14} /> Take final assessment <ArrowRight size={13} />
               </Link>
             ) : (
               <Link href="/learn" className="btn btn-primary">

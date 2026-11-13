@@ -17,7 +17,8 @@ const schema = z.discriminatedUnion("action", [
           choice: z.number().int().min(0).max(9),
         })
       )
-      .max(40),
+      .max(60),
+    violations: z.number().int().min(0).max(999).optional(),
   }),
 ]);
 
@@ -40,7 +41,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ ok: true, ...result });
     }
 
-    const result = submitExam(user, parsed.data.attemptId, parsed.data.answers);
+    const result = submitExam(
+      user,
+      parsed.data.attemptId,
+      parsed.data.answers,
+      parsed.data.violations ?? 0
+    );
     if (result.passed) {
       notify(
         user.id,

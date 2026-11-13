@@ -58,6 +58,8 @@ export default async function ExamPage() {
               {[
                 "Every learning module unlocks at no credit cost",
                 `${EXAM_QUESTION_COUNT} questions covering the full curriculum`,
+                "90-minute CBT with a question palette and Mark for Review",
+                "Tab switches are recorded during the attempt",
                 `${EXAM_PASS_PCT}% pass mark with a server-side score`,
                 "Completion Merit Certificate with a public verification link",
                 "Answer explanations after every attempt",
