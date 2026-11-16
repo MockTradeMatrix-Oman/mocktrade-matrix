@@ -4,10 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 import { useMarket } from "./socket";
 import { fmtMoney, fmtPct, toLocal } from "@/lib/finance";
+import { cn } from "@/lib/cn";
 
-export function cn(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
-}
+export { cn };
 
 export function Card({ className, children, hover }: { className?: string; children: React.ReactNode; hover?: boolean }) {
   return <div className={cn("card", hover && "card-hover", className)}>{children}</div>;

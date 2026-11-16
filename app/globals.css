@@ -565,3 +565,25 @@ html[lang="ta"] body {
   0%, 100% { transform: scale(1); opacity: .55; }
   50% { transform: scale(1.12); opacity: .18; }
 }
+
+/* fun layer: confetti burst and mascot float */
+.fun-confetti {
+  position: absolute;
+  top: -18px;
+  border-radius: 2px;
+  animation-name: fun-confetti-fall;
+  animation-timing-function: cubic-bezier(.22,.7,.35,1);
+  animation-fill-mode: both;
+}
+
+@keyframes fun-confetti-fall {
+  0% { transform: translate3d(0, -10px, 0) rotate(0deg); opacity: 1; }
+  100% { transform: translate3d(var(--drift, 0px), 82vh, 0) rotate(var(--spin, 320deg)); opacity: 0; }
+}
+
+.hilo-bob { animation: hilo-bob 3.6s ease-in-out infinite; }
+
+@keyframes hilo-bob {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50% { transform: translateY(-5px) rotate(1deg); }
+}

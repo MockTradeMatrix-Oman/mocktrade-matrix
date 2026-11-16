@@ -36,6 +36,8 @@ export type User = {
   plan_since: number | null;
   premium_until: number | null;
   premium_source: string | null;
+  /** Weekly XP league tier: bronze, silver, gold or diamond. */
+  league_tier: string;
   guardian_status: string;
   guardian_email: string | null;
   terms_accepted: number;
@@ -664,6 +666,88 @@ function migrate(d: DatabaseSync) {
 
     CREATE INDEX IF NOT EXISTS idx_expert_sessions_start ON expert_sessions(status, starts_at);
     CREATE INDEX IF NOT EXISTS idx_expert_rsvps_user ON expert_session_rsvps(user_id);
+
+    -- Fun layer: daily quests, streak freezes, lightning runs, weekly leagues,
+    -- badges and boss battles. Every row is derived from a real action -- a
+    -- lesson, quiz, trade, arena match or claimed quest -- so nothing here
+    -- invents progress. Tables are additive; older databases keep every row.
+    CREATE TABLE IF NOT EXISTS quest_claims (
+      user_id INTEGER NOT NULL,
+      day_key TEXT NOT NULL,
+      quest_key TEXT NOT NULL,
+      credits INTEGER NOT NULL DEFAULT 0,
+      xp INTEGER NOT NULL DEFAULT 0,
+      claimed_at INTEGER NOT NULL,
+      PRIMARY KEY (user_id, day_key, quest_key)
+    );
+
+    CREATE TABLE IF NOT EXISTS streak_freezes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      purchased_at INTEGER NOT NULL,
+      used_day TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS lightning_runs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      question_ids TEXT NOT NULL,
+      started_at INTEGER NOT NULL,
+      ends_at INTEGER NOT NULL,
+      submitted_at INTEGER,
+      total INTEGER NOT NULL DEFAULT 12,
+      correct INTEGER NOT NULL DEFAULT 0,
+      best_combo INTEGER NOT NULL DEFAULT 0,
+      xp INTEGER NOT NULL DEFAULT 0,
+      credits INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE TABLE IF NOT EXISTS league_cohorts (
+      week_key TEXT NOT NULL,
+      tier TEXT NOT NULL,
+      cohort INTEGER NOT NULL,
+      finalized INTEGER NOT NULL DEFAULT 0,
+      PRIMARY KEY (week_key, tier, cohort)
+    );
+
+    CREATE TABLE IF NOT EXISTS league_members (
+      week_key TEXT NOT NULL,
+      user_id INTEGER NOT NULL,
+      tier TEXT NOT NULL,
+      cohort INTEGER NOT NULL,
+      xp_start INTEGER NOT NULL,
+      joined_at INTEGER NOT NULL,
+      PRIMARY KEY (week_key, user_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS user_badges (
+      user_id INTEGER NOT NULL,
+      badge_key TEXT NOT NULL,
+      earned_at INTEGER NOT NULL,
+      PRIMARY KEY (user_id, badge_key)
+    );
+
+    CREATE TABLE IF NOT EXISTS boss_attempts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      boss_key TEXT NOT NULL,
+      month_key TEXT NOT NULL,
+      question_ids TEXT NOT NULL,
+      started_at INTEGER NOT NULL,
+      ends_at INTEGER NOT NULL,
+      submitted_at INTEGER,
+      score INTEGER NOT NULL DEFAULT 0,
+      total INTEGER NOT NULL DEFAULT 10,
+      passed INTEGER NOT NULL DEFAULT 0,
+      xp INTEGER NOT NULL DEFAULT 0,
+      credits INTEGER NOT NULL DEFAULT 0
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_quest_claims_user ON quest_claims(user_id, day_key);
+    CREATE INDEX IF NOT EXISTS idx_freezes_user ON streak_freezes(user_id, used_day);
+    CREATE INDEX IF NOT EXISTS idx_lightning_user ON lightning_runs(user_id, started_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_league_members_cohort ON league_members(week_key, tier, cohort);
+    CREATE INDEX IF NOT EXISTS idx_boss_user ON boss_attempts(user_id, month_key, boss_key);
   `);
 
   // Lightweight, additive migrations for databases created by earlier builds.
@@ -683,6 +767,7 @@ function migrate(d: DatabaseSync) {
   ensureColumn(d, "users", "plan_since", "INTEGER");
   ensureColumn(d, "users", "premium_until", "INTEGER");
   ensureColumn(d, "users", "premium_source", "TEXT");
+  ensureColumn(d, "users", "league_tier", "TEXT NOT NULL DEFAULT 'bronze'");
   d.prepare(
     "CREATE INDEX IF NOT EXISTS idx_users_premium ON users(plan, premium_until)"
   ).run();

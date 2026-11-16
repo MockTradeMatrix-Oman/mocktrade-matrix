@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AlertTriangle, ArrowRight, Award, BarChart3, Bell, Building2, CandlestickChart, CheckCircle2, ChevronRight, Crown, GraduationCap,
-  Info, LayoutDashboard, LineChart, LogOut, Menu, ScanFace, Settings2, ShieldCheck, ShoppingBag, Sparkles,
+  Info, LayoutDashboard, LineChart, ListChecks, LogOut, Medal, Menu, ScanFace, Settings2, ShieldCheck, ShoppingBag, Skull, Sparkles,
   Swords, Trophy, Users, Video, Wallet, X, Zap,
 } from "lucide-react";
 import { Avatar, Badge, cn, Progress } from "./ui";
@@ -25,20 +25,40 @@ type Notification = {
   id: number; type: string; title: string; body: string; read: number; created_at: number;
 };
 
-const NAV = [
-  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
-  { href: "/markets", label: "Markets", icon: LineChart },
-  { href: "/trade", label: "Trade terminal", icon: CandlestickChart },
-  { href: "/portfolio", label: "Portfolio", icon: Wallet },
-  { href: "/shop", label: "Capital shop", icon: ShoppingBag },
-  { href: "/learn", label: "Learning ladder", icon: GraduationCap },
-  { href: "/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/certificate", label: "Certificate", icon: Award },
-  { href: "/sessions", label: "Expert sessions", icon: Video },
-  { href: "/pricing", label: "Plans", icon: Crown },
-  { href: "/arena", label: "Quiz arena", icon: Swords },
-  { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { href: "/friends", label: "Friends", icon: Users },
+const NAV_GROUPS = [
+  {
+    label: "Workspace",
+    items: [
+      { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+      { href: "/markets", label: "Markets", icon: LineChart },
+      { href: "/trade", label: "Trade terminal", icon: CandlestickChart },
+      { href: "/portfolio", label: "Portfolio", icon: Wallet },
+      { href: "/shop", label: "Capital shop", icon: ShoppingBag },
+      { href: "/learn", label: "Learning ladder", icon: GraduationCap },
+      { href: "/analytics", label: "Analytics", icon: BarChart3 },
+      { href: "/certificate", label: "Certificate", icon: Award },
+      { href: "/sessions", label: "Expert sessions", icon: Video },
+    ],
+  },
+  {
+    label: "Play",
+    items: [
+      { href: "/quests", label: "Daily quests", icon: ListChecks },
+      { href: "/lightning", label: "Lightning round", icon: Zap },
+      { href: "/leagues", label: "Weekly leagues", icon: Medal },
+      { href: "/bosses", label: "Boss battles", icon: Skull },
+      { href: "/badges", label: "Badges", icon: Award },
+      { href: "/arena", label: "Quiz arena", icon: Swords },
+      { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
+    ],
+  },
+  {
+    label: "Community",
+    items: [
+      { href: "/friends", label: "Friends", icon: Users },
+      { href: "/pricing", label: "Plans", icon: Crown },
+    ],
+  },
 ];
 
 const TITLES: Record<string, { title: string; crumb: string }> = {
@@ -53,6 +73,11 @@ const TITLES: Record<string, { title: string; crumb: string }> = {
   "/exam": { title: "Final assessment", crumb: "Certificate" },
   "/sessions": { title: "Expert sessions", crumb: "Premium" },
   "/pricing": { title: "Plans", crumb: "Access" },
+  "/quests": { title: "Daily quests", crumb: "Play" },
+  "/lightning": { title: "Lightning round", crumb: "Play" },
+  "/leagues": { title: "Weekly leagues", crumb: "Play" },
+  "/bosses": { title: "Boss battles", crumb: "Play" },
+  "/badges": { title: "Badges", crumb: "Play" },
   "/arena": { title: "Quiz arena", crumb: "Live battles" },
   "/leaderboard": { title: "Leaderboard", crumb: "Rankings" },
   "/friends": { title: "Friends", crumb: "Together" },
@@ -181,9 +206,11 @@ export function Shell({
     : pathname.startsWith("/admin/modules/") ? { title: "Edit module", crumb: "Studio" }
     : TITLES[pathname] ?? { title: "Workspace", crumb: "MockTrade" };
 
-  const navItems = user.institutionAccess || user.role === "admin"
-    ? [...NAV, { href: "/institution", label: "Institution", icon: Building2 }]
-    : NAV;
+  const navGroups = NAV_GROUPS.map((group) =>
+    group.label === "Community" && (user.institutionAccess || user.role === "admin")
+      ? { ...group, items: [...group.items, { href: "/institution", label: "Institution", icon: Building2 }] }
+      : group
+  );
 
   async function signOut() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -263,26 +290,32 @@ export function Shell({
         <Link href="/dashboard"><Wordmark /></Link>
       </div>
 
-      <div className="px-3">
-        <div className="mb-2 px-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted/70">Workspace</div>
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            return (
-              <Link key={item.href} href={item.href} className={cn("nav-link", active && "nav-link-active")}>
-                <item.icon size={17} strokeWidth={1.8} />
-                <span>{item.label}</span>
-                {item.href === "/friends" && friendBadge > 0 ? (
-                  <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff5d7a] px-1 text-[9px] font-bold text-white">
-                    {friendBadge > 99 ? "99+" : friendBadge}
-                  </span>
-                ) : (
-                  active && <ChevronRight size={13} className="ml-auto text-[#2fe3a0]/70" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+      <div className="flex-1 overflow-y-auto px-3 pb-2">
+        {navGroups.map((group, index) => (
+          <div key={group.label} className={index > 0 ? "mt-5" : undefined}>
+            <div className="mb-2 px-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-muted/70">
+              {group.label}
+            </div>
+            <nav className="space-y-1">
+              {group.items.map((item) => {
+                const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                return (
+                  <Link key={item.href} href={item.href} className={cn("nav-link", active && "nav-link-active")}>
+                    <item.icon size={17} strokeWidth={1.8} />
+                    <span>{item.label}</span>
+                    {item.href === "/friends" && friendBadge > 0 ? (
+                      <span className="ml-auto flex h-4 min-w-4 items-center justify-center rounded-full bg-[#ff5d7a] px-1 text-[9px] font-bold text-white">
+                        {friendBadge > 99 ? "99+" : friendBadge}
+                      </span>
+                    ) : (
+                      active && <ChevronRight size={13} className="ml-auto text-[#2fe3a0]/70" />
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        ))}
       </div>
 
       {user.role === "admin" && (

@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
   BadgeCheck, Building2, Check, Globe2, GraduationCap, Loader2, LogOut, Palette, Rocket, Save,
-  ShieldCheck, Sparkles, Target, UserRound, Users, Wallet, Workflow, Zap,
+  ShieldCheck, Sparkles, Target, UserRound, Users, Volume2, VolumeX, Wallet, Workflow, Zap,
 } from "lucide-react";
-import { Avatar, Badge, Card, Modal, Progress, SectionHead, cn } from "./ui";
+import { Avatar, Badge, Card, Modal, Progress, SectionHead, Toggle, cn } from "./ui";
 import { useToast } from "./toast";
+import { useCelebration } from "./celebrate";
 import { MODES, fmtMoney, levelFromXp, modeName } from "@/lib/finance";
 import { ARENA_REGION_GROUPS } from "@/lib/regions";
 
@@ -47,6 +48,7 @@ export function SettingsView({
 }) {
   const router = useRouter();
   const { push } = useToast();
+  const { soundOn, setSoundOn } = useCelebration();
   const [name, setName] = useState(user.name);
   const [mode, setMode] = useState(user.mode);
   const [region, setRegion] = useState(user.region);
@@ -334,6 +336,26 @@ export function SettingsView({
                 <Palette size={13} className="text-muted" />
                 <span className="text-[9.5px] text-muted">Accent is a saved preference; the base tape stays legible.</span>
               </div>
+            </Card>
+
+            <Card className="p-4 sm:p-5">
+              <SectionHead title="Sound & motion" subtitle="Celebrations are subtle by default" />
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/[0.06] bg-white/[0.015] p-3">
+                <div className="flex items-start gap-2.5">
+                  <span className="mt-0.5 text-[#ffd08d]">
+                    {soundOn ? <Volume2 size={16} /> : <VolumeX size={16} />}
+                  </span>
+                  <div>
+                    <div className="text-[11.5px] font-semibold">Celebration sound</div>
+                    <div className="text-[9.5px] text-muted">A short chime when a quest, badge or boss lands. Off by default.</div>
+                  </div>
+                </div>
+                <Toggle checked={soundOn} onChange={setSoundOn} label={soundOn ? "On" : "Off"} />
+              </div>
+              <p className="mt-2 text-[9px] leading-relaxed text-muted/80">
+                Confetti and mascot motion automatically switch off when your device asks for reduced
+                motion. No audio ever plays without this toggle.
+              </p>
             </Card>
           </div>
 

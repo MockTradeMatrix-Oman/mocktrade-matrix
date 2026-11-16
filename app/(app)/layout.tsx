@@ -5,6 +5,7 @@ import { getAssets, getNotifications, getPredictionStats, getUnreadCount } from 
 import { getFriendBadges } from "@/lib/friends";
 import { SocketProvider } from "@/components/socket";
 import { ToastProvider } from "@/components/toast";
+import { CelebrationProvider } from "@/components/celebrate";
 import { Shell } from "@/components/shell";
 import { CrashOverlay } from "@/components/crash-overlay";
 
@@ -30,23 +31,25 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return (
     <ToastProvider>
-      <SocketProvider initialAssets={assets} initialAccuracy={accuracy}>
-        <Shell
-          user={{
-            id: user.id, name: user.name, email: user.email, avatar: user.avatar, mode: user.mode,
-            role: user.role, verified: Boolean(user.id_verified), institutionAccess: Boolean((user as any).institution_access),
-            premium: isPremium(user), planLabel: planLabel(user),
-            region: user.region, credits: user.credits, cash: user.cash, xp: user.xp,
-            streak: user.streak, accent: user.accent,
-          }}
-          notifications={notifications}
-          unread={unread}
-          friendBadges={friendBadges}
-        >
-          {children}
-        </Shell>
-        <CrashOverlay />
-      </SocketProvider>
+      <CelebrationProvider>
+        <SocketProvider initialAssets={assets} initialAccuracy={accuracy}>
+          <Shell
+            user={{
+              id: user.id, name: user.name, email: user.email, avatar: user.avatar, mode: user.mode,
+              role: user.role, verified: Boolean(user.id_verified), institutionAccess: Boolean((user as any).institution_access),
+              premium: isPremium(user), planLabel: planLabel(user),
+              region: user.region, credits: user.credits, cash: user.cash, xp: user.xp,
+              streak: user.streak, accent: user.accent,
+            }}
+            notifications={notifications}
+            unread={unread}
+            friendBadges={friendBadges}
+          >
+            {children}
+          </Shell>
+          <CrashOverlay />
+        </SocketProvider>
+      </CelebrationProvider>
     </ToastProvider>
   );
 }

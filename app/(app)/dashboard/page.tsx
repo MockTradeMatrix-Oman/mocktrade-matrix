@@ -5,8 +5,19 @@ import {
   getActivity, getAssets, getFeaturedPrediction, getLeaderboard, getModules,
   getPortfolio, getPortfolioHistory, getPredictionStats, getRecentPredictions, getUserRank,
 } from "@/lib/data";
+import { one } from "@/lib/db";
+import { isPremium } from "@/lib/plans";
+import { getDailyQuests } from "@/lib/fun/quests";
+import { freezeStatus } from "@/lib/fun/streak-freeze";
+import { lightningSummary } from "@/lib/fun/lightning";
+import { getLeague } from "@/lib/fun/leagues";
+import { bossStatus } from "@/lib/fun/bosses";
+import { hiloFor } from "@/lib/fun/hilo";
+import { getCertificate } from "@/lib/exam";
 import { modeName } from "@/lib/finance";
 import { Badge } from "@/components/ui";
+import { HiloCardView } from "@/components/hilo";
+import { DailyStrip } from "@/components/daily-strip";
 import {
   ActivityFeed, AiSignalCard, CrashTrainingBanner, CreditsCard, HoldingsMini,
   LadderPreview, LeaderboardCard, MarketPulse, PortfolioHero,
@@ -27,6 +38,49 @@ export default async function DashboardPage() {
   const recent = getRecentPredictions(8);
   const assets = getAssets();
   const nextModule = modules.find((m) => m.status === "unlocked") ?? modules.find((m) => m.status === "locked") ?? null;
+
+  const premium = isPremium(user);
+  const daily = getDailyQuests(user);
+  const freeze = freezeStatus(user.id);
+  const lightning = lightningSummary(user.id);
+  const certificate = getCertificate(user.id);
+  const modulesDone = modules.filter((m) => m.status === "completed").length;
+  const allComplete = modules.length > 0 && modulesDone >= modules.length;
+  const boss = premium ? bossStatus(user) : null;
+  const league = premium ? getLeague(user) : null;
+  const trades = one<{ c: number }>("SELECT COUNT(*) AS c FROM orders WHERE user_id = ?", user.id)?.c ?? 0;
+
+  const hilo = hiloFor(
+    {
+      name: user.name,
+      hour: new Date().getHours(),
+      streak: user.streak,
+      freezeUnused: freeze.unused,
+      questsClaimable: daily.claimable,
+      questsDone: daily.done,
+      modulesDone,
+      modulesTotal: modules.length,
+      nextModuleTitle: nextModule?.title ?? null,
+      lightningBest: lightning.best,
+      lightningRuns: lightning.runs,
+      hasTraded: trades > 0,
+      certificateReady: premium && allComplete && !certificate,
+      certificates: certificate ? 1 : 0,
+      premium,
+      league: league
+        ? {
+            tierLabel: league.tierLabel,
+            rank: league.myRank,
+            size: league.cohortSize,
+            daysLeft: Math.max(0, Math.ceil((league.endsAt - Date.now()) / 86_400_000)),
+          }
+        : null,
+      boss: boss
+        ? { name: boss.boss.name, daysLeft: boss.daysLeft, passed: boss.passed, premium: boss.premium }
+        : null,
+    },
+    daily.dayKey
+  );
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
@@ -51,6 +105,18 @@ export default async function DashboardPage() {
       </div>
 
       <CrashTrainingBanner done={Boolean(user.crash_done)} />
+
+      <div className="grid gap-4 xl:grid-cols-3">
+        <HiloCardView card={hilo} />
+        <div className="xl:col-span-2">
+          <DailyStrip
+            quests={daily.quests}
+            claimable={daily.claimable}
+            freezeUnused={freeze.unused}
+            streak={user.streak}
+          />
+        </div>
+      </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <div className="xl:col-span-2">
